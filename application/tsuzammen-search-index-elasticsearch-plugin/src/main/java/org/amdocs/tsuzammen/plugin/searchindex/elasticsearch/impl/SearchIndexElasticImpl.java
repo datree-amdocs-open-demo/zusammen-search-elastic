@@ -54,7 +54,14 @@ public class SearchIndexElasticImpl implements SearchIndex {
   public void create(SessionContext sessionContext, SearchContext searchContext,
                      SearchableData searchableData, Id id) {
     ElasticSearchServices esServices = new ElasticSearchServices();
-    esServices.create(sessionContext, searchContext, searchableData, id);
+    checkSearchableDataInstance(searchableData);
+    esServices.create(sessionContext, searchContext, (EsSearchableData) searchableData, id);
+  }
+
+  private void checkSearchableDataInstance(SearchableData searchableData) {
+    if (!(searchableData instanceof EsSearchableData)) {
+      throw new RuntimeException("Invalid instance of SearchableData, EsSearchableData object is expected");
+    }
   }
 
   @Override
@@ -77,7 +84,8 @@ public class SearchIndexElasticImpl implements SearchIndex {
   private void checkIfSearchableDataExist(SessionContext sessionContext,
                                           SearchableData searchableData, Id id,
                                           ElasticSearchServices esServices) throws IndexNotFoundException{
-    GetResponse getResponse = esServices.get(sessionContext, searchableData, id);
+    checkSearchableDataInstance(searchableData);
+    GetResponse getResponse = esServices.get(sessionContext, (EsSearchableData) searchableData, id);
     if (!getResponse.isExists()) {
       String notFoundErrorMsg = "Searchable data for tenant - '" + sessionContext.getTenant()
           + "', type - '" + ((EsSearchableData) searchableData).getType() + "' and id - '"

@@ -44,6 +44,7 @@ import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearcha
 import org.amdocs.tsuzammen.utils.fileutils.json.JsonUtil;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -53,7 +54,7 @@ import java.util.Objects;
 public class ElasticSearchServices {
 
   public IndexResponse create(SessionContext sessionContext, SearchContext searchContext,
-                              SearchableData searchableData, Id id) {
+                              EsSearchableData searchableData, Id id) {
     searchableDataValidation(searchableData, true);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
@@ -61,8 +62,8 @@ public class ElasticSearchServices {
     try {
       transportClient = clientServices.start(sessionContext, config);
       String index = getEsIndex(sessionContext);
-      String type = ((EsSearchableData) searchableData).getType();
-      String source = getEsSource(searchContext, (EsSearchableData) searchableData);
+      String type = searchableData.getType();
+      String source = getEsSource(searchContext, searchableData);
       return transportClient.prepareIndex(index, type, id.toString()).setSource(source).get();
 
     } catch (Exception e) {
@@ -74,7 +75,7 @@ public class ElasticSearchServices {
     }
   }
 
-  public GetResponse get(SessionContext sessionContext, SearchableData searchableData, Id id)
+  public GetResponse get(SessionContext sessionContext, EsSearchableData searchableData, Id id)
       throws IndexNotFoundException {
     searchableDataValidation(searchableData, false);
     TransportClient transportClient = null;
@@ -83,7 +84,7 @@ public class ElasticSearchServices {
     try {
       transportClient = clientServices.start(sessionContext, config);
       String index = getEsIndex(sessionContext);
-      String type = ((EsSearchableData) searchableData).getType();
+      String type = searchableData.getType();
       return transportClient.prepareGet(index, type, id.toString()).get();
 
     } catch (IndexNotFoundException indexNotFoundExc) {
@@ -101,7 +102,7 @@ public class ElasticSearchServices {
   Update by merging documents
    */
   public UpdateResponse update(SessionContext sessionContext, SearchContext searchContext,
-                               SearchableData searchableData, Id id) {
+                               EsSearchableData searchableData, Id id) {
     searchableDataValidation(searchableData, true);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
@@ -109,8 +110,8 @@ public class ElasticSearchServices {
     try {
       transportClient = clientServices.start(sessionContext, config);
       String index = getEsIndex(sessionContext);
-      String type = ((EsSearchableData) searchableData).getType();
-      String source = getEsSource(searchContext, (EsSearchableData) searchableData);
+      String type = searchableData.getType();
+      String source = getEsSource(searchContext, searchableData);
       return transportClient.prepareUpdate(index, type, id.toString()).setDoc(source).get();
 
 
@@ -123,24 +124,25 @@ public class ElasticSearchServices {
     }
   }
 
+  public SearchResponse search(SessionContext sessionContext, SearchContext searchContext,
+                               SearchableData searchableData, Id id){
+    return null;
 
-  private void searchableDataValidation(SearchableData searchableData, boolean isDataRequired) {
+  }
+
+  private void searchableDataValidation(EsSearchableData searchableData, boolean isDataRequired) {
     StringBuffer errorMsg = new StringBuffer();
 
     if (Objects.isNull(searchableData)) {
       errorMsg.append("SearchableData object is null");
       throw new RuntimeException(errorMsg.toString());
     }
-    if (!(searchableData instanceof EsSearchableData)) {
-      errorMsg.append("Invalid instance of SearchableData, EsSearchableData object is expected");
-      throw new RuntimeException(errorMsg.toString());
-    }
-    if (StringUtil.isNullOrEmpty(((EsSearchableData) searchableData).getType())) {
+    if (StringUtil.isNullOrEmpty(searchableData.getType())) {
       errorMsg.append("Empty type in the searchableData object").append("\n");
     }
 
     if (isDataRequired) {
-      dataValidation((EsSearchableData) searchableData, errorMsg);
+      dataValidation(searchableData, errorMsg);
     }
 
     if (errorMsg.length() > 0) {
