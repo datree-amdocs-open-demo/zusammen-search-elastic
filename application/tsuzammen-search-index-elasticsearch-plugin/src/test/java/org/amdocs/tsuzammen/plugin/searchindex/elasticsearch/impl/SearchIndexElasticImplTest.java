@@ -1,0 +1,166 @@
+/*
+ * 				Copyright takedown notice
+ *
+ * If you believe your copyright protected work was posted on Amdocs account in Github without authorization,
+ * you may submit a copyright infringement notification. Before doing so, please consider whether fair use,
+ * fair dealing, or a similar exception to copyright applies. These requests should only be submitted by the
+ * copyright owner or an agent authorized to act on the owner’s behalf.
+ *
+ * Please bear in mind that requesting the removal of content by submitting an infringement notification means
+ * initiating a legal process.
+ *
+ * Do not make false claims. Misuse of this process may result legal consequences.
+ *
+ * You can submit an alleged copyright infringement by sending an email to amdocsfossfp@amdocs.com and specifying
+ * the following information (copyright takedown notifications must include the following elements.
+ * Without this information, we will be unable to take action on your request):
+ *
+ * 1. Your contact information
+ * 	You’ll need to provide information that will allow us to contact you regarding your complaint, such as an email address, physical address or telephone number.
+ *
+ * 2. A description of your work that you believe has been infringed
+ * 	In your complaint, please describe the copyrighted content you want to protect.
+ *
+ * 3. You must agree to and include the following statement:
+ * 	“I believe that the use of the material is not authorized by the copyright owner, its agent, or the law.”
+ *
+ * 4. And the following statement:
+ * 	"The information in this notification is accurate, and I am the owner, or an agent authorized to act on behalf of the owner”
+ *
+ * 5. Your signature
+ * 	Please make sure to sign at the bottom of your complaint.
+ *
+ */
+
+package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.impl;
+
+import org.amdocs.tsuzammen.datatypes.Id;
+import org.amdocs.tsuzammen.datatypes.SessionContext;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchContext;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.EsTestUtils;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+
+public class SearchIndexElasticImplTest {
+  private Id searchableId = null;
+  private String type;
+  private String tenant;
+
+  private void initSearchData() {
+    tenant = "searchindexelasticimpltest";
+    type = "type1";
+    if (Objects.isNull(searchableId)) {
+      searchableId = new Id();
+    }
+  }
+
+  @Test
+  public void testCreate() throws Exception {
+    initSearchData();
+    String user = "createUser";
+    String spaceName = "public";
+    String message = "create es data test";
+    List<String> tags = new ArrayList<>();
+    tags.add("a");
+    tags.add("b");
+    tags.add("c");
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, message, tags);
+    new SearchIndexElasticImpl()
+        .create(sessionContext, searchContext, searchableData, searchableId);
+  }
+
+  @Test(dependsOnMethods = {"testCreate"})
+  public void testUpdate() throws Exception {
+    initSearchData();
+    String user = "updateUser";
+    String spaceName = "updateUser";
+    List<String> tags = new ArrayList<>();
+    tags.add("a");
+    tags.add("b");
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, null, tags);
+    new SearchIndexElasticImpl()
+        .update(sessionContext, searchContext, searchableData, searchableId);
+
+  }
+
+  @Test(expectedExceptions = {RuntimeException.class},
+      expectedExceptionsMessageRegExp = ".*Searchable data for tenant - " +
+          "'searchindexelasticimpltest', type - 'type1' and id - .* was not found.")
+  public void testUpdateIdNotExist() throws Exception {
+    initSearchData();
+    String user = "updateUser";
+    String spaceName = "updateUser";
+    List<String> tags = new ArrayList<>();
+    tags.add("a");
+    tags.add("b");
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, null, tags);
+    new SearchIndexElasticImpl()
+        .update(sessionContext, searchContext, searchableData, new Id());
+
+  }
+
+  @Test(expectedExceptions = {RuntimeException.class},
+      expectedExceptionsMessageRegExp = ".*Searchable data for tenant - 'invalidIndex' was not found.")
+  public void testUpdateIndexNotExist() throws Exception {
+    initSearchData();
+    String user = "updateUser";
+    String spaceName = "updateUser";
+    List<String> tags = new ArrayList<>();
+    tags.add("a");
+    tags.add("b");
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext("invalidIndex", user);
+    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, null, tags);
+    new SearchIndexElasticImpl()
+        .update(sessionContext, searchContext, searchableData, new Id());
+
+  }
+
+  @Test(dependsOnMethods = {"testCreate"}, expectedExceptions = {RuntimeException.class},
+      expectedExceptionsMessageRegExp = ".*Searchable data for tenant - " +
+          "'searchindexelasticimpltest', type - 'invalidType' and id - .* was not found.")
+  public void testUpdateTypeNotExist() throws Exception {
+    initSearchData();
+    String user = "updateUser";
+    String spaceName = "updateUser";
+    List<String> tags = new ArrayList<>();
+    tags.add("a");
+    tags.add("b");
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    EsSearchableData searchableData = EsTestUtils.createSearchableData("invalidType", user, null,
+        tags);
+    new SearchIndexElasticImpl()
+        .update(sessionContext, searchContext, searchableData, searchableId);
+
+  }
+
+
+/*
+  @Test
+  public void testSearch() throws Exception {
+
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+
+  }
+*/
+}

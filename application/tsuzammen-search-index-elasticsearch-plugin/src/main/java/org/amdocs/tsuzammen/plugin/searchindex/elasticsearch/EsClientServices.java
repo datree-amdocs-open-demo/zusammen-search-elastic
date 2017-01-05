@@ -46,7 +46,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Objects;
 
-public class EsClientService {
+public class EsClientServices {
 
   public TransportClient start(SessionContext sessionContext, EsConfig config) {
     TransportClient client;

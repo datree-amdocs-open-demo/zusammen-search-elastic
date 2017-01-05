@@ -35,21 +35,17 @@
 package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.impl;
 
 
-import io.netty.util.internal.StringUtil;
 import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchCriteria;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchResult;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchableData;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.EsClientService;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.EsConfig;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.ElasticSearchServices;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 import org.amdocs.tsuzammen.sdk.SearchIndex;
-import org.amdocs.tsuzammen.utils.fileutils.json.JsonUtil;
-import org.elasticsearch.client.transport.TransportClient;
-
-import java.util.Objects;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.index.IndexNotFoundException;
 
 public class SearchIndexElasticImpl implements SearchIndex {
 
@@ -57,78 +53,39 @@ public class SearchIndexElasticImpl implements SearchIndex {
   @Override
   public void create(SessionContext sessionContext, SearchContext searchContext,
                      SearchableData searchableData, Id id) {
-    searchableDataValidation(searchableData);
-    TransportClient transportClient = null;
-    EsClientService esClientService = new EsClientService();
-    EsConfig config = new EsConfig();
-    try {
-      transportClient = esClientService.start(sessionContext, config);
-      String index = getEsIndex(sessionContext);
-      String type = ((EsSearchableData) searchableData).getType();
-      String source = getEsSource(searchContext, (EsSearchableData) searchableData);
-      transportClient.prepareIndex(index, type).setSource(source).get();
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (Objects.nonNull(transportClient)) {
-        esClientService.stop(sessionContext, transportClient);
-      }
-    }
-
-
-  }
-
-  private void searchableDataValidation(SearchableData searchableData) {
-    StringBuffer errorMsg = new StringBuffer();
-
-    if (Objects.isNull(searchableData)) {
-      errorMsg.append("SearchableData object is null");
-      throw new RuntimeException(errorMsg.toString());
-    }
-    if (!(searchableData instanceof EsSearchableData)) {
-      errorMsg.append("Invalid instance of SearchableData, EsSearchableData object is expected");
-      throw new RuntimeException(errorMsg.toString());
-    }
-    if (StringUtil.isNullOrEmpty(((EsSearchableData) searchableData).getType())) {
-      errorMsg.append("Empty type in the searchableData object").append("\n");
-    }
-    if (Objects.isNull(((EsSearchableData) searchableData).getData())) {
-      errorMsg.append("Empty data in the searchableData object").append("\n");
-    } else {
-      try {
-        JsonUtil.inputStream2Json(((EsSearchableData) searchableData).getData());
-        ((EsSearchableData) searchableData).getData().reset();
-      } catch (Exception e) {
-        errorMsg.append("SearchableData object include invalid JSON data");
-      }
-    }
-
-    if (errorMsg.length() > 0) {
-      throw new RuntimeException(errorMsg.toString());
-    }
-  }
-
-  private String getEsSource(SearchContext searchContext, EsSearchableData searchableData) {
-    if (Objects.nonNull(searchableData.getData())) {
-      String searchContextJson = JsonUtil.object2Json(searchContext);
-      String searchableDataJson = JsonUtil.inputStream2Json(searchableData.getData());
-      searchableDataJson = searchableDataJson.substring(0, searchableDataJson.length() - 1) + ",";
-      searchContextJson = searchContextJson.substring(1);
-      return searchableDataJson + searchContextJson;
-    }
-    return "";
-  }
-
-  private String getEsIndex(SessionContext sessionContext) {
-    return sessionContext.getTenant();
+    ElasticSearchServices esServices = new ElasticSearchServices();
+    esServices.create(sessionContext, searchContext, searchableData, id);
   }
 
   @Override
   public void update(SessionContext sessionContext, SearchContext searchContext,
                      SearchableData searchableData, Id id) {
+    try {
+      ElasticSearchServices esServices = new ElasticSearchServices();
+      checkIfSearchableDataExist(sessionContext, searchableData, id, esServices);
+      create(sessionContext, searchContext, searchableData, id);
 
+    } catch (IndexNotFoundException indexNotFoundExc) {
+      String missingIndex = "Searchable data for tenant - '" + sessionContext.getTenant()
+          + "' was not found.";
+      throw new RuntimeException(missingIndex);
+    } catch (Exception exc) {
+      throw new RuntimeException(exc);
+    }
   }
+
+  private void checkIfSearchableDataExist(SessionContext sessionContext,
+                                          SearchableData searchableData, Id id,
+                                          ElasticSearchServices esServices) throws IndexNotFoundException{
+    GetResponse getResponse = esServices.get(sessionContext, searchableData, id);
+    if (!getResponse.isExists()) {
+      String notFoundErrorMsg = "Searchable data for tenant - '" + sessionContext.getTenant()
+          + "', type - '" + ((EsSearchableData) searchableData).getType() + "' and id - '"
+          + id.toString() + "' was not found.";
+      throw new RuntimeException(notFoundErrorMsg);
+    }
+  }
+
 
   @Override
   public SearchResult search(SessionContext sessionContext, SearchContext searchContext,
