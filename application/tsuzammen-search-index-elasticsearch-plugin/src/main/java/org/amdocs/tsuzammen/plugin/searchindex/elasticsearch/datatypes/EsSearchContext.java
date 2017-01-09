@@ -34,57 +34,35 @@
 
 package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes;
 
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchCriteria;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import org.amdocs.tsuzammen.datatypes.Id;
 
-public class EsSearchCriteria implements SearchCriteria {
+public class EsSearchContext {
+  private Id itemId;
+  private Id versionId;
+  private String space;
 
-  private List<String> types;
-  private Integer fromPage;
-  private Integer pageSize;
-  private InputStream query;
-
-  public List<String> getTypes() {
-    return types;
+  public Id getItemId() {
+    return itemId;
   }
 
-  public void setTypes(List<String> types) {
-    this.types = types;
+  public void setItemId(Id itemId) {
+    this.itemId = itemId;
   }
 
-  public void addType(String type) {
-    if (Objects.isNull(types)) {
-      types = new ArrayList<>();
-    }
-    types.add(type);
+  public Id getVersionId() {
+    return versionId;
   }
 
-  public Integer getFromPage() {
-    return fromPage;
+  public void setVersionId(Id versionId) {
+    this.versionId = versionId;
   }
 
-  public void setFromPage(Integer fromPage) {
-    this.fromPage = fromPage;
+  public String getSpace() {
+    return space;
   }
 
-  public Integer getPageSize() {
-    return pageSize;
+  public void setSpace(String space) {
+    this.space = space;
   }
-
-  public void setPageSize(Integer pageSize) {
-    this.pageSize = pageSize;
-  }
-
-  public InputStream getQuery() {
-    return query;
-  }
-
-  public void setQuery(InputStream query) {
-    this.query = query;
-  }
-
 }

@@ -38,22 +38,29 @@ package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch;
 import io.netty.util.internal.StringUtil;
 import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchableData;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexSpace;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchContext;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 import org.amdocs.tsuzammen.utils.fileutils.json.JsonUtil;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 import java.util.Objects;
 
 public class ElasticSearchServices {
 
-  public IndexResponse create(SessionContext sessionContext, SearchContext searchContext,
+  public IndexResponse create(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                               EsSearchableData searchableData, Id id) {
     searchableDataValidation(searchableData, true);
     TransportClient transportClient = null;
@@ -63,7 +70,7 @@ public class ElasticSearchServices {
       transportClient = clientServices.start(sessionContext, config);
       String index = getEsIndex(sessionContext);
       String type = searchableData.getType();
-      String source = getEsSource(searchContext, searchableData);
+      String source = getEsSource(sessionContext, searchIndexContext, searchableData);
       return transportClient.prepareIndex(index, type, id.toString()).setSource(source).get();
 
     } catch (Exception e) {
@@ -101,7 +108,7 @@ public class ElasticSearchServices {
   /*
   Update by merging documents
    */
-  public UpdateResponse update(SessionContext sessionContext, SearchContext searchContext,
+  public UpdateResponse update(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                                EsSearchableData searchableData, Id id) {
     searchableDataValidation(searchableData, true);
     TransportClient transportClient = null;
@@ -111,7 +118,7 @@ public class ElasticSearchServices {
       transportClient = clientServices.start(sessionContext, config);
       String index = getEsIndex(sessionContext);
       String type = searchableData.getType();
-      String source = getEsSource(searchContext, searchableData);
+      String source = getEsSource(sessionContext, searchIndexContext, searchableData);
       return transportClient.prepareUpdate(index, type, id.toString()).setDoc(source).get();
 
 
@@ -124,11 +131,67 @@ public class ElasticSearchServices {
     }
   }
 
-  public SearchResponse search(SessionContext sessionContext, SearchContext searchContext,
-                               SearchableData searchableData, Id id){
-    return null;
+  public SearchResponse search(SessionContext sessionContext, SearchIndexContext searchIndexContext,
+                               EsSearchCriteria searchCriteria) {
+    TransportClient transportClient = null;
+    EsClientServices clientServices = new EsClientServices();
+    EsConfig config = new EsConfig();
+    try {
+      transportClient = clientServices.start(sessionContext, config);
+      String index = getEsIndex(sessionContext);
+      SearchRequestBuilder searchRequestBuilder = transportClient.prepareSearch(index);
+      searchRequestBuilder.setSearchType(SearchType.DEFAULT);
+      searchRequestBuilder.setExplain(false);
+
+      if (Objects.nonNull(searchCriteria.getQuery())) {
+        searchRequestBuilder.setQuery(
+            QueryBuilders.wrapperQuery(JsonUtil.inputStream2Json(searchCriteria.getQuery())));
+      }
+      if (Objects.nonNull(searchCriteria.getFromPage())) {
+        searchRequestBuilder.setFrom(searchCriteria.getFromPage());
+      }
+      if (Objects.nonNull(searchCriteria.getPageSize())) {
+        searchRequestBuilder.setSize(searchCriteria.getPageSize());
+      }
+
+      if (Objects.nonNull(searchCriteria.getTypes()) && searchCriteria.getTypes().size() > 0) {
+        searchRequestBuilder.setTypes(searchCriteria.getTypes().toArray(new String[searchCriteria
+            .getTypes().size()]));
+      }
+      createPostFilter(sessionContext, searchIndexContext);
+
+      return searchRequestBuilder.get();
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (Objects.nonNull(transportClient)) {
+        clientServices.stop(sessionContext, transportClient);
+      }
+    }
 
   }
+
+  private QueryBuilder createPostFilter(SessionContext sessionContext,
+                                        SearchIndexContext searchIndexContext) {
+    BoolQueryBuilder postFilter = QueryBuilders.boolQuery()
+        .filter(QueryBuilders.termQuery("itemId", searchIndexContext.getItemId()))
+        .filter(QueryBuilders.termQuery("versionId", searchIndexContext.getVersionId()));
+    if (Objects.isNull(searchIndexContext.getSpace())) {
+      throw new RuntimeException("Missing search space value in search context");
+    }
+
+    if (searchIndexContext.getSpace().equals(SearchIndexSpace.PUBLIC)) {
+      postFilter
+          .filter(QueryBuilders.termQuery("space", SearchIndexSpace.PUBLIC.name().toLowerCase()));
+    } else if (searchIndexContext.getSpace().equals(SearchIndexSpace.PRIVATE)) {
+      postFilter
+          .filter(QueryBuilders.termQuery("space", sessionContext.getUser().getUserName()
+              .toLowerCase().replaceAll("\\s+","")));
+    }
+    return postFilter;
+  }
+
 
   private void searchableDataValidation(EsSearchableData searchableData, boolean isDataRequired) {
     StringBuffer errorMsg = new StringBuffer();
@@ -163,19 +226,50 @@ public class ElasticSearchServices {
     }
   }
 
-  private String getEsSource(SearchContext searchContext, EsSearchableData searchableData) {
+  private String getEsSource(SessionContext sessionContext, SearchIndexContext searchIndexContext,
+                             EsSearchableData searchableData) {
     if (Objects.nonNull(searchableData.getData())) {
-      String searchContextJson = JsonUtil.object2Json(searchContext);
+      EsSearchContext elasticSearchContext =
+          getElasticSearchContext(sessionContext, searchIndexContext);
+      String elasticSearchContextJson = JsonUtil.object2Json(elasticSearchContext);
       String searchableDataJson = JsonUtil.inputStream2Json(searchableData.getData());
       searchableDataJson = searchableDataJson.substring(0, searchableDataJson.length() - 1) + ",";
-      searchContextJson = searchContextJson.substring(1);
-      return searchableDataJson + searchContextJson;
+      elasticSearchContextJson = elasticSearchContextJson.substring(1);
+      return searchableDataJson + elasticSearchContextJson;
     }
     return "";
   }
 
+  private EsSearchContext getElasticSearchContext(SessionContext sessionContext,
+                                                  SearchIndexContext searchIndexContext) {
+    EsSearchContext elasticSearchContext = new EsSearchContext();
+    elasticSearchContext.setItemId(searchIndexContext.getItemId());
+    elasticSearchContext.setVersionId(searchIndexContext.getVersionId());
+    elasticSearchContext.setSpace(getElasticSpace(sessionContext, searchIndexContext));
+    return elasticSearchContext;
+  }
+
+  private String getElasticSpace(SessionContext sessionContext, SearchIndexContext searchContext) {
+    if (Objects.nonNull(searchContext.getSpace())) {
+      if (searchContext.getSpace().equals(SearchIndexSpace.PRIVATE)) {
+        return sessionContext.getUser().getUserName();
+      } else if (searchContext.getSpace().equals(SearchIndexSpace.PUBLIC)) {
+        return SearchIndexSpace.PUBLIC.name().toLowerCase();
+      } else {
+        throw new RuntimeException(
+            SearchIndexSpace.BOTH.name() + "is invalid Search Space value for "
+                + "create and update actions");
+      }
+    }
+    throw new RuntimeException("Missing search space value in search context");
+  }
+
   private String getEsIndex(SessionContext sessionContext) {
-    return sessionContext.getTenant();
+    String tenant = sessionContext.getTenant();
+    if (StringUtil.isNullOrEmpty(tenant)) {
+      throw new RuntimeException("Missing tenant value in session context, tenant is mandatory");
+    }
+    return tenant;
   }
 
 

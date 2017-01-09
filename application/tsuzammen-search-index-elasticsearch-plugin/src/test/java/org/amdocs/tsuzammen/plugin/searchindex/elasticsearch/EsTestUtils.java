@@ -38,12 +38,16 @@ import io.netty.util.internal.StringUtil;
 import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
 import org.amdocs.tsuzammen.datatypes.UserInfo;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchContext;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexSpace;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class EsTestUtils {
 
@@ -59,10 +63,20 @@ public class EsTestUtils {
     return searchableData;
   }
 
-  public static EsSearchableData createSearchableData(String type, String user, String message,
+  public static EsSearchableData createSearchableData(String type, String name, String message,
                                                       List<String> tags) {
     EsSearchableData searchableData = new EsSearchableData();
+    searchableData.setType(type);
+    Optional<String> jsonData = getJson(name, message, tags);
+    jsonData.ifPresent(s -> searchableData.setData(jsonToInputStream(s)));
+    return searchableData;
+  }
 
+  public static Optional<String> getJson(String name, String message, List<String> tags) {
+    if (Objects.isNull(name) && Objects.isNull(message)
+        && (Objects.isNull(tags) || tags.size() == 0)) {
+      return Optional.empty();
+    }
     StringBuilder stringBuilder = new StringBuilder();
     if (Objects.nonNull(tags)) {
       for (int i = 0; i < tags.size(); i++) {
@@ -75,22 +89,32 @@ public class EsTestUtils {
     }
     StringBuilder jsonData = new StringBuilder();
     jsonData.append("{\n");
-    if (!StringUtil.isNullOrEmpty(user)) {
-      jsonData.append("  \"user\":\"").append(user).append("\",\n");
+    if (!StringUtil.isNullOrEmpty(name)) {
+      jsonData.append("  \"name\":\"").append(name).append("\"");
     }
     if (!StringUtil.isNullOrEmpty(message)) {
-      jsonData.append("  \"message\":\"").append(message).append("\",\n");
+      if (jsonData.length() > 0) {
+        jsonData.append(",\n");
+      }
+      jsonData.append("  \"message\":\"").append(message).append("\"");
     }
     if (Objects.nonNull(tags) && tags.size() > 0) {
+      if (jsonData.length() > 0) {
+        jsonData.append(",\n");
+      }
       jsonData.append("  \"tags\": [").append(stringBuilder.toString());
       jsonData.append("]  \n");
     }
     jsonData.append("}");
-
-    searchableData.setType(type);
-    searchableData.setData(new ByteArrayInputStream(jsonData.toString().getBytes()));
-    return searchableData;
+    return Optional.of(jsonData.toString());
   }
+
+  public static String wrapperTermQuery(String json) {
+    StringBuilder wrapperTermQuery = new StringBuilder();
+    wrapperTermQuery.append("{\"term\":").append(json).append("}");
+    return wrapperTermQuery.toString();
+  }
+
 
   public static SessionContext createSessionContext(String tenant, String user) {
     SessionContext sessionContext = new SessionContext();
@@ -99,11 +123,27 @@ public class EsTestUtils {
     return sessionContext;
   }
 
-  public static SearchContext createSearchContext(String spaceName) {
-    SearchContext searchContext = new SearchContext();
+  public static SearchIndexContext createSearchContext(SearchIndexSpace space) {
+    SearchIndexContext searchContext = new SearchIndexContext();
     searchContext.setItemId(new Id());
     searchContext.setVersionId(new Id());
-    searchContext.setSpaceName(spaceName);
+    searchContext.setSpace(space);
     return searchContext;
+  }
+
+  public static EsSearchCriteria createSearchCriteria(List<String> types, Integer fromPage,
+                                                      Integer pageSize, String jsonQuery
+  ) {
+    EsSearchCriteria searchCriteria = new EsSearchCriteria();
+    searchCriteria.setTypes(types);
+    searchCriteria.setFromPage(fromPage);
+    searchCriteria.setPageSize(pageSize);
+    searchCriteria.setQuery(jsonToInputStream(jsonQuery));
+    return searchCriteria;
+  }
+
+  private static InputStream jsonToInputStream(String json) {
+    return new ByteArrayInputStream(json.getBytes());
+
   }
 }

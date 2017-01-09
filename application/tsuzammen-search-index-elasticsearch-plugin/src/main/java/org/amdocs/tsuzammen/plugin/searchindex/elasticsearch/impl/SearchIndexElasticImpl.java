@@ -37,8 +37,8 @@ package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.impl;
 
 import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchCriteria;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchResult;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchableData;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.ElasticSearchServices;
@@ -51,11 +51,11 @@ public class SearchIndexElasticImpl implements SearchIndex {
 
 
   @Override
-  public void create(SessionContext sessionContext, SearchContext searchContext,
+  public void create(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                      SearchableData searchableData, Id id) {
     ElasticSearchServices esServices = new ElasticSearchServices();
     checkSearchableDataInstance(searchableData);
-    esServices.create(sessionContext, searchContext, (EsSearchableData) searchableData, id);
+    esServices.create(sessionContext, searchIndexContext, (EsSearchableData) searchableData, id);
   }
 
   private void checkSearchableDataInstance(SearchableData searchableData) {
@@ -65,12 +65,12 @@ public class SearchIndexElasticImpl implements SearchIndex {
   }
 
   @Override
-  public void update(SessionContext sessionContext, SearchContext searchContext,
+  public void update(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                      SearchableData searchableData, Id id) {
     try {
       ElasticSearchServices esServices = new ElasticSearchServices();
       checkIfSearchableDataExist(sessionContext, searchableData, id, esServices);
-      create(sessionContext, searchContext, searchableData, id);
+      create(sessionContext, searchIndexContext, searchableData, id);
 
     } catch (IndexNotFoundException indexNotFoundExc) {
       String missingIndex = "Searchable data for tenant - '" + sessionContext.getTenant()
@@ -96,13 +96,13 @@ public class SearchIndexElasticImpl implements SearchIndex {
 
 
   @Override
-  public SearchResult search(SessionContext sessionContext, SearchContext searchContext,
+  public SearchResult search(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                              SearchCriteria searchCriteria) {
     return null;
   }
 
   @Override
-  public void delete(SessionContext sessionContext, SearchContext searchContext,
+  public void delete(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                      SearchCriteria searchCriteria, Id id) {
 
   }

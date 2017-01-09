@@ -36,7 +36,8 @@ package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.impl;
 
 import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchContext;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
+import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexSpace;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.EsTestUtils;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 import org.testng.annotations.Test;
@@ -63,7 +64,6 @@ public class SearchIndexElasticImplTest {
   public void testCreate() throws Exception {
     initSearchData();
     String user = "createUser";
-    String spaceName = "public";
     String message = "create es data test";
     List<String> tags = new ArrayList<>();
     tags.add("a");
@@ -71,7 +71,7 @@ public class SearchIndexElasticImplTest {
     tags.add("c");
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    SearchIndexContext searchContext = EsTestUtils.createSearchContext(SearchIndexSpace.PUBLIC);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, message, tags);
     new SearchIndexElasticImpl()
         .create(sessionContext, searchContext, searchableData, searchableId);
@@ -81,13 +81,12 @@ public class SearchIndexElasticImplTest {
   public void testUpdate() throws Exception {
     initSearchData();
     String user = "updateUser";
-    String spaceName = "updateUser";
     List<String> tags = new ArrayList<>();
     tags.add("a");
     tags.add("b");
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    SearchIndexContext searchContext = EsTestUtils.createSearchContext(SearchIndexSpace.PUBLIC);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, null, tags);
     new SearchIndexElasticImpl()
         .update(sessionContext, searchContext, searchableData, searchableId);
@@ -100,13 +99,12 @@ public class SearchIndexElasticImplTest {
   public void testUpdateIdNotExist() throws Exception {
     initSearchData();
     String user = "updateUser";
-    String spaceName = "updateUser";
     List<String> tags = new ArrayList<>();
     tags.add("a");
     tags.add("b");
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    SearchIndexContext searchContext = EsTestUtils.createSearchContext(SearchIndexSpace.PUBLIC);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, null, tags);
     new SearchIndexElasticImpl()
         .update(sessionContext, searchContext, searchableData, new Id());
@@ -118,13 +116,12 @@ public class SearchIndexElasticImplTest {
   public void testUpdateIndexNotExist() throws Exception {
     initSearchData();
     String user = "updateUser";
-    String spaceName = "updateUser";
     List<String> tags = new ArrayList<>();
     tags.add("a");
     tags.add("b");
 
     SessionContext sessionContext = EsTestUtils.createSessionContext("invalidIndex", user);
-    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    SearchIndexContext searchContext = EsTestUtils.createSearchContext(SearchIndexSpace.PUBLIC);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, user, null, tags);
     new SearchIndexElasticImpl()
         .update(sessionContext, searchContext, searchableData, new Id());
@@ -137,13 +134,12 @@ public class SearchIndexElasticImplTest {
   public void testUpdateTypeNotExist() throws Exception {
     initSearchData();
     String user = "updateUser";
-    String spaceName = "updateUser";
     List<String> tags = new ArrayList<>();
     tags.add("a");
     tags.add("b");
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchContext searchContext = EsTestUtils.createSearchContext(spaceName);
+    SearchIndexContext searchContext = EsTestUtils.createSearchContext(SearchIndexSpace.PUBLIC);
     EsSearchableData searchableData = EsTestUtils.createSearchableData("invalidType", user, null,
         tags);
     new SearchIndexElasticImpl()
