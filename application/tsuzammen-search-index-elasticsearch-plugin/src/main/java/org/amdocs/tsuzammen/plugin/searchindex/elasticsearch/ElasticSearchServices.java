@@ -52,8 +52,6 @@ import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 import java.util.Objects;
@@ -62,7 +60,7 @@ public class ElasticSearchServices {
 
   public IndexResponse create(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                               EsSearchableData searchableData, Id id) {
-    searchableDataValidation(searchableData, true);
+    inputValidation(searchableData, id, true);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
     EsConfig config = new EsConfig();
@@ -84,7 +82,7 @@ public class ElasticSearchServices {
 
   public GetResponse get(SessionContext sessionContext, EsSearchableData searchableData, Id id)
       throws IndexNotFoundException {
-    searchableDataValidation(searchableData, false);
+    inputValidation(searchableData, id, false);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
     EsConfig config = new EsConfig();
@@ -110,7 +108,7 @@ public class ElasticSearchServices {
    */
   public UpdateResponse update(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                                EsSearchableData searchableData, Id id) {
-    searchableDataValidation(searchableData, true);
+    inputValidation(searchableData, id, true);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
     EsConfig config = new EsConfig();
@@ -158,7 +156,6 @@ public class ElasticSearchServices {
         searchRequestBuilder.setTypes(searchCriteria.getTypes().toArray(new String[searchCriteria
             .getTypes().size()]));
       }
-      createPostFilter(sessionContext, searchIndexContext);
 
       return searchRequestBuilder.get();
 
@@ -172,30 +169,13 @@ public class ElasticSearchServices {
 
   }
 
-  private QueryBuilder createPostFilter(SessionContext sessionContext,
-                                        SearchIndexContext searchIndexContext) {
-    BoolQueryBuilder postFilter = QueryBuilders.boolQuery()
-        .filter(QueryBuilders.termQuery("itemId", searchIndexContext.getItemId()))
-        .filter(QueryBuilders.termQuery("versionId", searchIndexContext.getVersionId()));
-    if (Objects.isNull(searchIndexContext.getSpace())) {
-      throw new RuntimeException("Missing search space value in search context");
-    }
 
-    if (searchIndexContext.getSpace().equals(SearchIndexSpace.PUBLIC)) {
-      postFilter
-          .filter(QueryBuilders.termQuery("space", SearchIndexSpace.PUBLIC.name().toLowerCase()));
-    } else if (searchIndexContext.getSpace().equals(SearchIndexSpace.PRIVATE)) {
-      postFilter
-          .filter(QueryBuilders.termQuery("space", sessionContext.getUser().getUserName()
-              .toLowerCase().replaceAll("\\s+","")));
-    }
-    return postFilter;
-  }
-
-
-  private void searchableDataValidation(EsSearchableData searchableData, boolean isDataRequired) {
+  private void inputValidation(EsSearchableData searchableData, Id id, boolean isDataRequired) {
     StringBuffer errorMsg = new StringBuffer();
 
+    if (Objects.isNull(id)) {
+      errorMsg.append("Id object is null").append("\n");
+    }
     if (Objects.isNull(searchableData)) {
       errorMsg.append("SearchableData object is null");
       throw new RuntimeException(errorMsg.toString());
@@ -226,9 +206,10 @@ public class ElasticSearchServices {
     }
   }
 
-  private String getEsSource(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                             EsSearchableData searchableData) {
-    if (Objects.nonNull(searchableData.getData())) {
+  private String getEsSource(SessionContext sessionContext,
+                                       SearchIndexContext searchIndexContext,
+                                       EsSearchableData searchableData) {
+    if (Objects.nonNull(searchableData) && Objects.nonNull(searchableData.getData())) {
       EsSearchContext elasticSearchContext =
           getElasticSearchContext(sessionContext, searchIndexContext);
       String elasticSearchContextJson = JsonUtil.object2Json(elasticSearchContext);

@@ -42,6 +42,8 @@ import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchResult;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchableData;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.ElasticSearchServices;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchResult;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 import org.amdocs.tsuzammen.sdk.SearchIndex;
 import org.elasticsearch.action.get.GetResponse;
@@ -60,7 +62,8 @@ public class SearchIndexElasticImpl implements SearchIndex {
 
   private void checkSearchableDataInstance(SearchableData searchableData) {
     if (!(searchableData instanceof EsSearchableData)) {
-      throw new RuntimeException("Invalid instance of SearchableData, EsSearchableData object is expected");
+      throw new RuntimeException(
+          "Invalid instance of SearchableData, EsSearchableData object is expected");
     }
   }
 
@@ -69,6 +72,7 @@ public class SearchIndexElasticImpl implements SearchIndex {
                      SearchableData searchableData, Id id) {
     try {
       ElasticSearchServices esServices = new ElasticSearchServices();
+      checkSearchableDataInstance(searchableData);
       checkIfSearchableDataExist(sessionContext, searchableData, id, esServices);
       create(sessionContext, searchIndexContext, searchableData, id);
 
@@ -83,8 +87,8 @@ public class SearchIndexElasticImpl implements SearchIndex {
 
   private void checkIfSearchableDataExist(SessionContext sessionContext,
                                           SearchableData searchableData, Id id,
-                                          ElasticSearchServices esServices) throws IndexNotFoundException{
-    checkSearchableDataInstance(searchableData);
+                                          ElasticSearchServices esServices)
+      throws IndexNotFoundException {
     GetResponse getResponse = esServices.get(sessionContext, (EsSearchableData) searchableData, id);
     if (!getResponse.isExists()) {
       String notFoundErrorMsg = "Searchable data for tenant - '" + sessionContext.getTenant()
@@ -94,11 +98,22 @@ public class SearchIndexElasticImpl implements SearchIndex {
     }
   }
 
-
   @Override
   public SearchResult search(SessionContext sessionContext, SearchIndexContext searchIndexContext,
                              SearchCriteria searchCriteria) {
-    return null;
+    ElasticSearchServices esServices = new ElasticSearchServices();
+    checkSearchCriteriaInstance(searchCriteria);
+    EsSearchResult searchResult = new EsSearchResult();
+    searchResult.setSearchResponse(
+        esServices.search(sessionContext, searchIndexContext, (EsSearchCriteria) searchCriteria));
+    return searchResult;
+  }
+
+  private void checkSearchCriteriaInstance(SearchCriteria searchCriteria) {
+    if (!(searchCriteria instanceof EsSearchCriteria)) {
+      throw new RuntimeException(
+          "Invalid instance of SearchCriteria, EsSearchCriteria object is expected");
+    }
   }
 
   @Override

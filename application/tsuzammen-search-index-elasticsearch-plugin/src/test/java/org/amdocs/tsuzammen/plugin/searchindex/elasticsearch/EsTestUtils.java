@@ -110,9 +110,7 @@ public class EsTestUtils {
   }
 
   public static String wrapperTermQuery(String json) {
-    StringBuilder wrapperTermQuery = new StringBuilder();
-    wrapperTermQuery.append("{\"term\":").append(json).append("}");
-    return wrapperTermQuery.toString();
+    return "{\"term\":" + json + "}";
   }
 
 
@@ -123,7 +121,7 @@ public class EsTestUtils {
     return sessionContext;
   }
 
-  public static SearchIndexContext createSearchContext(SearchIndexSpace space) {
+  public static SearchIndexContext createSearchIndexContext(SearchIndexSpace space) {
     SearchIndexContext searchContext = new SearchIndexContext();
     searchContext.setItemId(new Id());
     searchContext.setVersionId(new Id());
@@ -138,7 +136,9 @@ public class EsTestUtils {
     searchCriteria.setTypes(types);
     searchCriteria.setFromPage(fromPage);
     searchCriteria.setPageSize(pageSize);
-    searchCriteria.setQuery(jsonToInputStream(jsonQuery));
+    if (Objects.nonNull(jsonQuery)) {
+      searchCriteria.setQuery(jsonToInputStream(jsonQuery));
+    }
     return searchCriteria;
   }
 
