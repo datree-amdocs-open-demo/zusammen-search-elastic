@@ -44,6 +44,7 @@ import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchC
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 import org.amdocs.tsuzammen.utils.fileutils.json.JsonUtil;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -59,8 +60,8 @@ import java.util.Objects;
 public class ElasticSearchServices {
 
   public IndexResponse create(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                              EsSearchableData searchableData, Id id) {
-    inputValidation(searchableData, id, true);
+                              EsSearchableData searchableData, Id searchableDataId) {
+    inputValidation(searchableData, searchableDataId, true);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
     EsConfig config = new EsConfig();
@@ -69,7 +70,8 @@ public class ElasticSearchServices {
       String index = getEsIndex(sessionContext);
       String type = searchableData.getType();
       String source = getEsSource(sessionContext, searchIndexContext, searchableData);
-      return transportClient.prepareIndex(index, type, id.toString()).setSource(source).get();
+      return transportClient.prepareIndex(index, type, searchableDataId.toString())
+          .setSource(source).get();
 
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -80,9 +82,10 @@ public class ElasticSearchServices {
     }
   }
 
-  public GetResponse get(SessionContext sessionContext, EsSearchableData searchableData, Id id)
+  public GetResponse get(SessionContext sessionContext, EsSearchableData searchableData,
+                         Id searchableDataId)
       throws IndexNotFoundException {
-    inputValidation(searchableData, id, false);
+    inputValidation(searchableData, searchableDataId, false);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
     EsConfig config = new EsConfig();
@@ -90,7 +93,7 @@ public class ElasticSearchServices {
       transportClient = clientServices.start(sessionContext, config);
       String index = getEsIndex(sessionContext);
       String type = searchableData.getType();
-      return transportClient.prepareGet(index, type, id.toString()).get();
+      return transportClient.prepareGet(index, type, searchableDataId.toString()).get();
 
     } catch (IndexNotFoundException indexNotFoundExc) {
       throw indexNotFoundExc;
@@ -107,8 +110,8 @@ public class ElasticSearchServices {
   Update by merging documents
    */
   public UpdateResponse update(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                               EsSearchableData searchableData, Id id) {
-    inputValidation(searchableData, id, true);
+                               EsSearchableData searchableData, Id searchableDataId) {
+    inputValidation(searchableData, searchableDataId, true);
     TransportClient transportClient = null;
     EsClientServices clientServices = new EsClientServices();
     EsConfig config = new EsConfig();
@@ -117,7 +120,8 @@ public class ElasticSearchServices {
       String index = getEsIndex(sessionContext);
       String type = searchableData.getType();
       String source = getEsSource(sessionContext, searchIndexContext, searchableData);
-      return transportClient.prepareUpdate(index, type, id.toString()).setDoc(source).get();
+      return transportClient.prepareUpdate(index, type, searchableDataId.toString()).setDoc(source)
+          .get();
 
 
     } catch (Exception e) {
@@ -169,12 +173,35 @@ public class ElasticSearchServices {
 
   }
 
+  public DeleteResponse delete(SessionContext sessionContext, EsSearchableData searchableData,
+                               Id searchableDataId) {
+    inputValidation(searchableData, searchableDataId, false);
+    TransportClient transportClient = null;
+    EsClientServices clientServices = new EsClientServices();
+    EsConfig config = new EsConfig();
+    try {
+      transportClient = clientServices.start(sessionContext, config);
+      String index = getEsIndex(sessionContext);
+      String type = searchableData.getType();
 
-  private void inputValidation(EsSearchableData searchableData, Id id, boolean isDataRequired) {
+      return transportClient.prepareDelete(index, type, searchableDataId.toString()).get();
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (Objects.nonNull(transportClient)) {
+        clientServices.stop(sessionContext, transportClient);
+      }
+    }
+
+  }
+
+  private void inputValidation(EsSearchableData searchableData, Id searchableDataId,
+                               boolean isDataRequired) {
     StringBuffer errorMsg = new StringBuffer();
 
-    if (Objects.isNull(id)) {
-      errorMsg.append("Id object is null").append("\n");
+    if (Objects.isNull(searchableDataId)) {
+      errorMsg.append("Searchable Data Id object is null").append("\n");
     }
     if (Objects.isNull(searchableData)) {
       errorMsg.append("SearchableData object is null");
@@ -207,8 +234,8 @@ public class ElasticSearchServices {
   }
 
   private String getEsSource(SessionContext sessionContext,
-                                       SearchIndexContext searchIndexContext,
-                                       EsSearchableData searchableData) {
+                             SearchIndexContext searchIndexContext,
+                             EsSearchableData searchableData) {
     if (Objects.nonNull(searchableData) && Objects.nonNull(searchableData.getData())) {
       EsSearchContext elasticSearchContext =
           getElasticSearchContext(sessionContext, searchIndexContext);
@@ -250,7 +277,7 @@ public class ElasticSearchServices {
     if (StringUtil.isNullOrEmpty(tenant)) {
       throw new RuntimeException("Missing tenant value in session context, tenant is mandatory");
     }
-    return tenant;
+    return tenant.replaceAll("\\ |\\\"|\\*|\\/|\\<|\\||\\|\\,|\\>|\\\\|\\?|\\,", "").toLowerCase();
   }
 
 

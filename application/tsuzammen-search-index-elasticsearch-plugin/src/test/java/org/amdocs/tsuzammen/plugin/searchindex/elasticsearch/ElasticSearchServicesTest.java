@@ -40,6 +40,7 @@ import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexSpace;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -74,8 +75,8 @@ public class ElasticSearchServicesTest {
     }
   }
 
-  @Test
-  public void testCreate() throws Exception {
+  @Test(groups = "create")
+  public void testCreate() {
     initSearchData();
     String message = "create es data test";
     List<String> tags = new ArrayList<>();
@@ -92,17 +93,33 @@ public class ElasticSearchServicesTest {
         .create(sessionContext, searchContext, searchableData, searchableId);
     Assert.assertEquals(response.getResult().getLowercase(), "created");
 
-    searchableData =
-        EsTestUtils.createSearchableData("type2", updateName, message, tags);
+    searchableData = EsTestUtils.createSearchableData("type2", updateName, message, tags);
     response = new ElasticSearchServices()
+        .create(sessionContext, searchContext, searchableData, searchableId);
+    Assert.assertEquals(response.getResult().getLowercase(), "created");
+  }
+
+  @Test
+  public void testCreateWithFixInvalidIndex() {
+    initSearchData();
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(" one \" OO * * ee * \"\" " +
+            "** sDs \\\\ ww \\ w < P<A tt << EE | s|sd ,w ,q >> ksjk> d / // ww /p ?? q? s    ",
+        user);
+    SearchIndexContext searchContext =
+        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PRIVATE);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData("type2", updateName, null, null);
+    IndexResponse response = new ElasticSearchServices()
         .create(sessionContext, searchContext, searchableData, new Id());
     Assert.assertEquals(response.getResult().getLowercase(), "created");
+    Assert.assertEquals(response.getIndex(), "oneooeesdswwwpatteessdwqksjkdwwpqs");
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = "Empty type in the searchableData object\n"
           + "Empty data in the searchableData object\n")
-  public void testCreateWithNoSearchableDataAndType() throws Exception {
+  public void testCreateWithNoSearchableDataAndType() {
     String tenant = "tenant1";
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
@@ -115,7 +132,7 @@ public class ElasticSearchServicesTest {
 
   @Test(expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = "SearchableData object is null")
-  public void testCreateWithNullSearchableData() throws Exception {
+  public void testCreateWithNullSearchableData() {
     String tenant = "tenant1";
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
@@ -126,8 +143,8 @@ public class ElasticSearchServicesTest {
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
-      expectedExceptionsMessageRegExp = "Id object is null.*")
-  public void testCreateWithNullId() throws Exception {
+      expectedExceptionsMessageRegExp = "Searchable Data Id object is null.*")
+  public void testCreateWithNullId() {
     String tenant = "tenant1";
 
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
@@ -139,7 +156,7 @@ public class ElasticSearchServicesTest {
 
   @Test(expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = "SearchableData object include invalid JSON data")
-  public void testCreateWithInvalidData() throws Exception {
+  public void testCreateWithInvalidData() {
     initSearchData();
     String tenant = "tenant1";
 
@@ -152,8 +169,8 @@ public class ElasticSearchServicesTest {
   }
 
 
-  @Test(dependsOnMethods = {"testCreate"})
-  public void testUpdate() throws Exception {
+  @Test(groups = "create", dependsOnMethods = {"testCreate"})
+  public void testUpdate() {
     initSearchData();
     List<String> tags = new ArrayList<>();
     tags.add("a");
@@ -169,8 +186,8 @@ public class ElasticSearchServicesTest {
     Assert.assertEquals(response.getResult().getLowercase(), "updated");
   }
 
-  @Test(dependsOnMethods = {"testCreate"})
-  public void testGet() throws Exception {
+  @Test(groups = "create", dependsOnMethods = {"testCreate"})
+  public void testGet() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, null, null, null);
@@ -180,7 +197,7 @@ public class ElasticSearchServicesTest {
   }
 
   @Test
-  public void testGetIdNotFound() throws Exception {
+  public void testGetIdNotFound() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, null, null, null);
@@ -189,8 +206,8 @@ public class ElasticSearchServicesTest {
     Assert.assertEquals(response.isExists(), false);
   }
 
-  @Test(dependsOnMethods = {"testCreate"})
-  public void testGetTypeNotFound() throws Exception {
+  @Test(groups = "create", dependsOnMethods = {"testCreate"})
+  public void testGetTypeNotFound() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData = EsTestUtils.createSearchableData("notFoundType", null,
@@ -201,15 +218,15 @@ public class ElasticSearchServicesTest {
   }
 
   @Test(expectedExceptions = {IndexNotFoundException.class})
-  public void testGetIndexNotFound() throws Exception {
+  public void testGetIndexNotFound() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext("notFoundIndex", user);
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, null, null, null);
     new ElasticSearchServices().get(sessionContext, searchableData, searchableId);
   }
 
-  @Test(dependsOnMethods = {"testCreate", "testUpdate"})
-  public void testSearchFullParameters() throws Exception {
+  @Test(groups = "search", dependsOnGroups = {"create"})
+  public void testSearchFullParameters() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -230,8 +247,8 @@ public class ElasticSearchServicesTest {
     }
   }
 
-  @Test(dependsOnMethods = {"testCreate", "testUpdate"})
-  public void testSearchNoQueryParam() throws Exception {
+  @Test(groups = "search", dependsOnGroups = {"create"})
+  public void testSearchNoQueryParam() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -245,8 +262,8 @@ public class ElasticSearchServicesTest {
     Assert.assertEquals(response.getHits().getTotalHits(), 1);
   }
 
-  @Test(dependsOnMethods = {"testCreate", "testUpdate"})
-  public void testSearchNoFromPageParam() throws Exception {
+  @Test(groups = "search", dependsOnGroups = {"create"})
+  public void testSearchNoFromPageParam() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -267,8 +284,8 @@ public class ElasticSearchServicesTest {
     }
   }
 
-  @Test(dependsOnMethods = {"testCreate", "testUpdate"})
-  public void testSearchNoPageSizeParam() throws Exception {
+  @Test(groups = "search", dependsOnGroups = {"create"})
+  public void testSearchNoPageSizeParam() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -287,8 +304,8 @@ public class ElasticSearchServicesTest {
     }
   }
 
-  @Test(dependsOnMethods = {"testCreate", "testUpdate"})
-  public void testSearchNoTypeParam() throws Exception {
+  @Test(groups = "search", dependsOnGroups = {"create"})
+  public void testSearchNoTypeParam() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -316,6 +333,54 @@ public class ElasticSearchServicesTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, createName, null, null);
     new ElasticSearchServices().create(sessionContext, searchContext, searchableData, new Id());
-
   }
+
+  @Test(dependsOnGroups = {"create", "search"})
+  public void testDelete() {
+    initSearchData();
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData(type, null, null, null);
+    DeleteResponse response =
+        new ElasticSearchServices().delete(sessionContext, searchableData, searchableId);
+    Assert.assertEquals(response.getResult().getLowercase(), "deleted");
+    searchableData.setType("type2");
+    response =
+        new ElasticSearchServices().delete(sessionContext, searchableData, searchableId);
+    Assert.assertEquals(response.getResult().getLowercase(), "deleted");
+  }
+
+  @Test
+  public void testDeleteIdNotFound() {
+    initSearchData();
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData(type, null, null, null);
+    DeleteResponse response =
+        new ElasticSearchServices().delete(sessionContext, searchableData, new Id());
+    Assert.assertEquals(response.getResult().getLowercase(), "not_found");
+  }
+
+  @Test
+  public void testDeleteTypeNotFound() {
+    initSearchData();
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData("notFoundType", null, null, null);
+    DeleteResponse response =
+        new ElasticSearchServices().delete(sessionContext, searchableData, searchableId);
+    Assert.assertEquals(response.getResult().getLowercase(), "not_found");
+  }
+
+  @Test
+  public void testDeleteIndexNotFound() {
+    initSearchData();
+    SessionContext sessionContext = EsTestUtils.createSessionContext("notfoundtenant", user);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData(type, null, null, null);
+    DeleteResponse response =
+        new ElasticSearchServices().delete(sessionContext, searchableData, searchableId);
+    Assert.assertEquals(response.getResult().getLowercase(), "not_found");
+  }
+
 }

@@ -71,8 +71,8 @@ public class SearchIndexElasticImplTest {
     }
   }
 
-  @Test
-  public void testCreate() throws Exception {
+  @Test(groups = "create")
+  public void testCreate() {
     initSearchData();
 
     String message = "create es data test";
@@ -93,7 +93,7 @@ public class SearchIndexElasticImplTest {
   @Test(expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = "Invalid instance of SearchableData, EsSearchableData "
           + "object is expected")
-  public void testCreateInvalidSearchableDataInstance() throws Exception {
+  public void testCreateInvalidSearchableDataInstance() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -102,8 +102,8 @@ public class SearchIndexElasticImplTest {
         .create(sessionContext, searchContext, null, searchableId);
   }
 
-  @Test(dependsOnMethods = {"testCreate"})
-  public void testUpdate() throws Exception {
+  @Test(groups = "create", dependsOnMethods = {"testCreate"})
+  public void testUpdate() {
     initSearchData();
     List<String> tags = new ArrayList<>();
     tags.add("a");
@@ -119,10 +119,10 @@ public class SearchIndexElasticImplTest {
 
   }
 
-  @Test(expectedExceptions = {RuntimeException.class},
+  @Test(groups = "create", expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = ".*Searchable data for tenant - " +
           "'searchindexelasticimpltest', type - 'type1' and id - .* was not found.")
-  public void testUpdateIdNotExist() throws Exception {
+  public void testUpdateIdNotExist() {
     initSearchData();
     List<String> tags = new ArrayList<>();
     tags.add("a");
@@ -138,9 +138,9 @@ public class SearchIndexElasticImplTest {
 
   }
 
-  @Test(expectedExceptions = {RuntimeException.class},
+  @Test(groups = "create", expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = ".*Searchable data for tenant - 'invalidIndex' was not found.")
-  public void testUpdateIndexNotExist() throws Exception {
+  public void testUpdateIndexNotExist() {
     initSearchData();
     List<String> tags = new ArrayList<>();
     tags.add("a");
@@ -156,10 +156,10 @@ public class SearchIndexElasticImplTest {
 
   }
 
-  @Test(dependsOnMethods = {"testCreate"}, expectedExceptions = {RuntimeException.class},
-      expectedExceptionsMessageRegExp = ".*Searchable data for tenant - " +
-          "'searchindexelasticimpltest', type - 'invalidType' and id - .* was not found.")
-  public void testUpdateTypeNotExist() throws Exception {
+  @Test(groups = "create", dependsOnMethods = {"testCreate"}, expectedExceptions =
+      {RuntimeException.class}, expectedExceptionsMessageRegExp = ".*Searchable data for tenant - "
+      + "'searchindexelasticimpltest', type - 'invalidType' and id - .* was not found.")
+  public void testUpdateTypeNotExist() {
     initSearchData();
     List<String> tags = new ArrayList<>();
     tags.add("a");
@@ -175,8 +175,8 @@ public class SearchIndexElasticImplTest {
 
   }
 
-  @Test(dependsOnMethods = {"testCreate", "testUpdate"})
-  public void testSearch() throws Exception {
+  @Test(groups = "search", dependsOnGroups = {"create"})
+  public void testSearch() {
     initSearchData();
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     SearchIndexContext searchContext =
@@ -204,10 +204,30 @@ public class SearchIndexElasticImplTest {
     }
   }
 
-/*
-  @Test
-  public void testDelete() throws Exception {
 
+  @Test(dependsOnGroups = {"create", "search"})
+  public void testDelete() {
+    initSearchData();
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData(type, null, null, null);
+    new SearchIndexElasticImpl()
+        .delete(sessionContext, null, searchableData, searchableId);
   }
-*/
+
+  @Test(dependsOnGroups = {"create", "search"}, expectedExceptions =
+      {RuntimeException.class},
+      expectedExceptionsMessageRegExp = "Delete failed - Searchable data for tenant - "
+          + "'searchindexelasticimpltest', type - 'type1' and id - .* was not found.")
+  public void testDeleteNotFound() {
+    initSearchData();
+
+    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
+    EsSearchableData searchableData =
+        EsTestUtils.createSearchableData(type, null, null, null);
+    new SearchIndexElasticImpl()
+        .delete(sessionContext, null, searchableData, new Id());
+  }
+
 }

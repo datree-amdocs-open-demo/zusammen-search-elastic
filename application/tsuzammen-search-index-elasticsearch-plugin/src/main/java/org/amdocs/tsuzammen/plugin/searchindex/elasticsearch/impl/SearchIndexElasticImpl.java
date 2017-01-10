@@ -46,6 +46,7 @@ import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchC
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchResult;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
 import org.amdocs.tsuzammen.sdk.SearchIndex;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.index.IndexNotFoundException;
 
@@ -118,7 +119,18 @@ public class SearchIndexElasticImpl implements SearchIndex {
 
   @Override
   public void delete(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                     SearchCriteria searchCriteria, Id id) {
-
+                     SearchableData searchableData, Id id) {
+    ElasticSearchServices esServices = new ElasticSearchServices();
+    checkSearchableDataInstance(searchableData);
+    DeleteResponse response = esServices
+        .delete(sessionContext, (EsSearchableData) searchableData, id);
+    if (response.getResult().getLowercase().equals("not_found")) {
+      String notFoundErrorMsg = "Delete failed - Searchable data for tenant - '" +
+          sessionContext
+          .getTenant()
+          + "', type - '" + ((EsSearchableData) searchableData).getType() + "' and id - '"
+          + id.toString() + "' was not found.";
+      throw new RuntimeException(notFoundErrorMsg);
+    }
   }
 }
