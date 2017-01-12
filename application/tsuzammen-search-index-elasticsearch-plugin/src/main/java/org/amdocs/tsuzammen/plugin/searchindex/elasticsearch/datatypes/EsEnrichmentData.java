@@ -35,31 +35,43 @@
 package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes;
 
 
-import org.amdocs.tsuzammen.utils.fileutils.FileUtils;
+import org.amdocs.tsuzammen.datatypes.Id;
 
-import java.io.InputStream;
-import java.util.Objects;
+public class EsEnrichmentData {
+  private Id itemId;
+  private Id versionId;
+  private String space;
+  private Id elementId;
 
-public class EsSearchableData {
-  private String type;
-  private byte[] data;
-
-  public String getType() {
-    return type;
+  public Id getItemId() {
+    return itemId;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setItemId(Id itemId) {
+    this.itemId = itemId;
   }
 
-  public InputStream getData() {
-    if(Objects.isNull(data)){
-      return null;
-    }
-    return FileUtils.toInputStream(data);
+  public Id getVersionId() {
+    return versionId;
   }
 
-  public void setData(InputStream data) {
-    this.data = FileUtils.toByteArray(data);
+  public void setVersionId(Id versionId) {
+    this.versionId = versionId;
+  }
+
+  public String getSpace() {
+    return space;
+  }
+
+  public void setSpace(String space) {
+    this.space = space;
+  }
+
+  public Id getElementId() {
+    return elementId;
+  }
+
+  public void setElementId(Id elementId) {
+    this.elementId = elementId;
   }
 }

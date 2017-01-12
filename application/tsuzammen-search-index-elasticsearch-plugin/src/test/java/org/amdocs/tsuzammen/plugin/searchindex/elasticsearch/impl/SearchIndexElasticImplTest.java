@@ -34,200 +34,55 @@
 
 package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.impl;
 
-import org.amdocs.tsuzammen.datatypes.Id;
-import org.amdocs.tsuzammen.datatypes.SessionContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexSpace;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchResult;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.EsTestUtils;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.SearchIndex;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchResult;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
-import org.testng.Assert;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
+import static org.mockito.Matchers.anyObject;
 
 public class SearchIndexElasticImplTest {
-  private Id searchableId = null;
-  private String type;
-  private String tenant;
-  private String user;
-  private String createName;
-  private String updateName;
 
-  private void initSearchData() {
-    tenant = "searchindexelasticimpltest";
-    type = "type1";
-    user = "user";
-    createName = "createName";
-    updateName = "updateName";
-    if (Objects.isNull(searchableId)) {
-      searchableId = new Id();
-    }
+  @Mock
+  ElementSearchIndex elementSearchIndexMock;
+  @Mock
+  SearchIndex searchIndexMock;
+  @InjectMocks
+  SearchIndexElasticImpl searchIndexElasticImpl;
+
+
+  @BeforeMethod(alwaysRun = true)
+  public void injectDoubles() {
+    MockitoAnnotations.initMocks(this);
+    Mockito.doNothing().when(elementSearchIndexMock).createElement(anyObject(), anyObject());
+    Mockito.doNothing().when(elementSearchIndexMock).updateElement(anyObject(), anyObject());
+    Mockito.doNothing().when(elementSearchIndexMock).deleteElement(anyObject(), anyObject());
+    Mockito.when(searchIndexMock.search(anyObject(), anyObject())).thenReturn(new EsSearchResult());
   }
 
-  @Test(groups = "create")
-  public void testCreate() {
-    initSearchData();
-
-    String message = "create es data test";
-    List<String> tags = new ArrayList<>();
-    tags.add("a");
-    tags.add("b");
-    tags.add("c");
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData(type, createName, message, tags);
-    new SearchIndexElasticImpl()
-        .create(sessionContext, searchContext, searchableData, searchableId);
+  @Test
+  public void testCreateElement() throws Exception {
+    searchIndexElasticImpl.createElement(null, null);
   }
 
-  @Test(expectedExceptions = {RuntimeException.class},
-      expectedExceptionsMessageRegExp = "Invalid instance of SearchableData, EsSearchableData "
-          + "object is expected")
-  public void testCreateInvalidSearchableDataInstance() {
-    initSearchData();
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-    new SearchIndexElasticImpl()
-        .create(sessionContext, searchContext, null, searchableId);
+  @Test
+  public void testUpdateElement() throws Exception {
+    searchIndexElasticImpl.updateElement(null, null);
   }
 
-  @Test(groups = "create", dependsOnMethods = {"testCreate"})
-  public void testUpdate() {
-    initSearchData();
-    List<String> tags = new ArrayList<>();
-    tags.add("a");
-    tags.add("b");
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData(type, updateName, null, tags);
-    new SearchIndexElasticImpl()
-        .update(sessionContext, searchContext, searchableData, searchableId);
-
+  @Test
+  public void testDeleteElement() throws Exception {
+    searchIndexElasticImpl.deleteElement(null, null);
   }
 
-  @Test(groups = "create", expectedExceptions = {RuntimeException.class},
-      expectedExceptionsMessageRegExp = ".*Searchable data for tenant - " +
-          "'searchindexelasticimpltest', type - 'type1' and id - .* was not found.")
-  public void testUpdateIdNotExist() {
-    initSearchData();
-    List<String> tags = new ArrayList<>();
-    tags.add("a");
-    tags.add("b");
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData(type, updateName, null, tags);
-    new SearchIndexElasticImpl()
-        .update(sessionContext, searchContext, searchableData, new Id());
-
-  }
-
-  @Test(groups = "create", expectedExceptions = {RuntimeException.class},
-      expectedExceptionsMessageRegExp = ".*Searchable data for tenant - 'invalidIndex' was not found.")
-  public void testUpdateIndexNotExist() {
-    initSearchData();
-    List<String> tags = new ArrayList<>();
-    tags.add("a");
-    tags.add("b");
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext("invalidIndex", user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData(type, updateName, null, tags);
-    new SearchIndexElasticImpl()
-        .update(sessionContext, searchContext, searchableData, new Id());
-
-  }
-
-  @Test(groups = "create", dependsOnMethods = {"testCreate"}, expectedExceptions =
-      {RuntimeException.class}, expectedExceptionsMessageRegExp = ".*Searchable data for tenant - "
-      + "'searchindexelasticimpltest', type - 'invalidType' and id - .* was not found.")
-  public void testUpdateTypeNotExist() {
-    initSearchData();
-    List<String> tags = new ArrayList<>();
-    tags.add("a");
-    tags.add("b");
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData("invalidType", updateName, null, tags);
-    new SearchIndexElasticImpl()
-        .update(sessionContext, searchContext, searchableData, searchableId);
-
-  }
-
-  @Test(groups = "search", dependsOnGroups = {"create"})
-  public void testSearch() {
-    initSearchData();
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    SearchIndexContext searchContext =
-        EsTestUtils.createSearchIndexContext(SearchIndexSpace.PUBLIC);
-
-    Optional<String> json = EsTestUtils.getJson(updateName, null, null);
-    Assert.assertEquals(json.isPresent(), true);
-    if (json.isPresent()) {
-      String jsonQuery = EsTestUtils.wrapperTermQuery(json.get().toLowerCase());
-
-      List<String> types = new ArrayList<>();
-      types.add(type);
-      EsSearchCriteria searchCriteria = EsTestUtils.createSearchCriteria(types, 0, 1, jsonQuery);
-      SearchResult searchResult =
-          new SearchIndexElasticImpl().search(sessionContext, searchContext, searchCriteria);
-      Assert.assertEquals(searchResult instanceof EsSearchResult, true);
-      if (searchResult instanceof EsSearchResult) {
-        Assert
-            .assertEquals(
-                ((EsSearchResult) searchResult).getSearchResponse().getHits().getTotalHits(),
-                1);
-        Assert.assertEquals(
-            ((EsSearchResult) searchResult).getSearchResponse().getHits().getHits().length, 1);
-      }
-    }
-  }
-
-
-  @Test(dependsOnGroups = {"create", "search"})
-  public void testDelete() {
-    initSearchData();
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData(type, null, null, null);
-    new SearchIndexElasticImpl()
-        .delete(sessionContext, null, searchableData, searchableId);
-  }
-
-  @Test(dependsOnGroups = {"create", "search"}, expectedExceptions =
-      {RuntimeException.class},
-      expectedExceptionsMessageRegExp = "Delete failed - Searchable data for tenant - "
-          + "'searchindexelasticimpltest', type - 'type1' and id - .* was not found.")
-  public void testDeleteNotFound() {
-    initSearchData();
-
-    SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
-    EsSearchableData searchableData =
-        EsTestUtils.createSearchableData(type, null, null, null);
-    new SearchIndexElasticImpl()
-        .delete(sessionContext, null, searchableData, new Id());
+  @Test
+  public void testSearch() throws Exception {
+    searchIndexElasticImpl.search(null, null);
   }
 
 }

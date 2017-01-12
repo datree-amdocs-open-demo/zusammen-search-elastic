@@ -37,11 +37,12 @@ package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch;
 import io.netty.util.internal.StringUtil;
 import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
+import org.amdocs.tsuzammen.datatypes.Space;
 import org.amdocs.tsuzammen.datatypes.UserInfo;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexSpace;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
+import org.amdocs.tsuzammen.sdk.types.searchindex.ElementSearchableData;
+import org.amdocs.tsuzammen.utils.fileutils.json.JsonUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -121,14 +122,6 @@ public class EsTestUtils {
     return sessionContext;
   }
 
-  public static SearchIndexContext createSearchIndexContext(SearchIndexSpace space) {
-    SearchIndexContext searchContext = new SearchIndexContext();
-    searchContext.setItemId(new Id());
-    searchContext.setVersionId(new Id());
-    searchContext.setSpace(space);
-    return searchContext;
-  }
-
   public static EsSearchCriteria createSearchCriteria(List<String> types, Integer fromPage,
                                                       Integer pageSize, String jsonQuery
   ) {
@@ -145,5 +138,24 @@ public class EsTestUtils {
   private static InputStream jsonToInputStream(String json) {
     return new ByteArrayInputStream(json.getBytes());
 
+  }
+
+  public static InputStream objectToInputStrem(Object object) {
+    return new ByteArrayInputStream(JsonUtil.object2Json(object).getBytes());
+  }
+
+  public static ElementSearchableData createElementSearchableData(EsSearchableData searchableData,
+                                                                  Space space, Id itemId,
+                                                                  Id versionId,
+                                                                  Id elementId) {
+    ElementSearchableData elementSearchableData = new ElementSearchableData();
+    if(Objects.nonNull(searchableData)) {
+      elementSearchableData.setSearchableData(EsTestUtils.objectToInputStrem(searchableData));
+    }
+    elementSearchableData.setSpace(space);
+    elementSearchableData.setItemId(itemId);
+    elementSearchableData.setElementId(elementId);
+    elementSearchableData.setVersionId(versionId);
+    return elementSearchableData;
   }
 }

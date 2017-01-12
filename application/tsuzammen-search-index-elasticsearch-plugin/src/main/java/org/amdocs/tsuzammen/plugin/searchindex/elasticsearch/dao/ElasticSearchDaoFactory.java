@@ -32,34 +32,17 @@
  *
  */
 
-package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes;
+package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao;
 
 
-import org.amdocs.tsuzammen.utils.fileutils.FileUtils;
+import org.amdocs.tsuzammen.datatypes.SessionContext;
+import org.amdocs.tsuzammen.utils.facade.api.AbstractComponentFactory;
+import org.amdocs.tsuzammen.utils.facade.api.AbstractFactory;
 
-import java.io.InputStream;
-import java.util.Objects;
-
-public class EsSearchableData {
-  private String type;
-  private byte[] data;
-
-  public String getType() {
-    return type;
+public abstract class ElasticSearchDaoFactory extends AbstractComponentFactory<ElasticSearchDao> {
+  public static ElasticSearchDaoFactory getInstance() {
+    return AbstractFactory.getInstance(ElasticSearchDaoFactory.class);
   }
 
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public InputStream getData() {
-    if(Objects.isNull(data)){
-      return null;
-    }
-    return FileUtils.toInputStream(data);
-  }
-
-  public void setData(InputStream data) {
-    this.data = FileUtils.toByteArray(data);
-  }
+  public abstract ElasticSearchDao createInterface(SessionContext context);
 }

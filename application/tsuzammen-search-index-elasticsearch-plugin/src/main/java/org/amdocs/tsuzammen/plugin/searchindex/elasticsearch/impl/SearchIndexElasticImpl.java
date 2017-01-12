@@ -35,102 +35,53 @@
 package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.impl;
 
 
-import org.amdocs.tsuzammen.datatypes.Id;
 import org.amdocs.tsuzammen.datatypes.SessionContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchCriteria;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchIndexContext;
 import org.amdocs.tsuzammen.datatypes.searchindex.SearchResult;
-import org.amdocs.tsuzammen.datatypes.searchindex.SearchableData;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.ElasticSearchServices;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchResult;
-import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
-import org.amdocs.tsuzammen.sdk.SearchIndex;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.index.IndexNotFoundException;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.SearchIndex;
+import org.amdocs.tsuzammen.sdk.types.searchindex.ElementSearchableData;
 
-public class SearchIndexElasticImpl implements SearchIndex {
+public class SearchIndexElasticImpl implements org.amdocs.tsuzammen.sdk.SearchIndex {
 
+  private ElementSearchIndex elementSearchIndex;
+  private SearchIndex searchIndex;
 
   @Override
-  public void create(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                     SearchableData searchableData, Id id) {
-    ElasticSearchServices esServices = new ElasticSearchServices();
-    checkSearchableDataInstance(searchableData);
-    esServices.create(sessionContext, searchIndexContext, (EsSearchableData) searchableData, id);
-  }
-
-  private void checkSearchableDataInstance(SearchableData searchableData) {
-    if (!(searchableData instanceof EsSearchableData)) {
-      throw new RuntimeException(
-          "Invalid instance of SearchableData, EsSearchableData object is expected");
-    }
+  public void createElement(SessionContext sessionContext,
+                            ElementSearchableData elementSearchableData) {
+    getElementSearchIndex().createElement(sessionContext, elementSearchableData);
   }
 
   @Override
-  public void update(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                     SearchableData searchableData, Id id) {
-    try {
-      ElasticSearchServices esServices = new ElasticSearchServices();
-      checkSearchableDataInstance(searchableData);
-      checkIfSearchableDataExist(sessionContext, searchableData, id, esServices);
-      create(sessionContext, searchIndexContext, searchableData, id);
-
-    } catch (IndexNotFoundException indexNotFoundExc) {
-      String missingIndex = "Searchable data for tenant - '" + sessionContext.getTenant()
-          + "' was not found.";
-      throw new RuntimeException(missingIndex);
-    } catch (Exception exc) {
-      throw new RuntimeException(exc);
-    }
-  }
-
-  private void checkIfSearchableDataExist(SessionContext sessionContext,
-                                          SearchableData searchableData, Id id,
-                                          ElasticSearchServices esServices)
-      throws IndexNotFoundException {
-    GetResponse getResponse = esServices.get(sessionContext, (EsSearchableData) searchableData, id);
-    if (!getResponse.isExists()) {
-      String notFoundErrorMsg = "Searchable data for tenant - '" + sessionContext.getTenant()
-          + "', type - '" + ((EsSearchableData) searchableData).getType() + "' and id - '"
-          + id.toString() + "' was not found.";
-      throw new RuntimeException(notFoundErrorMsg);
-    }
+  public void updateElement(SessionContext sessionContext,
+                            ElementSearchableData elementSearchableData) {
+    getElementSearchIndex().updateElement(sessionContext, elementSearchableData);
   }
 
   @Override
-  public SearchResult search(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                             SearchCriteria searchCriteria) {
-    ElasticSearchServices esServices = new ElasticSearchServices();
-    checkSearchCriteriaInstance(searchCriteria);
-    EsSearchResult searchResult = new EsSearchResult();
-    searchResult.setSearchResponse(
-        esServices.search(sessionContext, searchIndexContext, (EsSearchCriteria) searchCriteria));
-    return searchResult;
-  }
-
-  private void checkSearchCriteriaInstance(SearchCriteria searchCriteria) {
-    if (!(searchCriteria instanceof EsSearchCriteria)) {
-      throw new RuntimeException(
-          "Invalid instance of SearchCriteria, EsSearchCriteria object is expected");
-    }
+  public void deleteElement(SessionContext sessionContext,
+                            ElementSearchableData elementSearchableData) {
+    getElementSearchIndex().deleteElement(sessionContext, elementSearchableData);
   }
 
   @Override
-  public void delete(SessionContext sessionContext, SearchIndexContext searchIndexContext,
-                     SearchableData searchableData, Id id) {
-    ElasticSearchServices esServices = new ElasticSearchServices();
-    checkSearchableDataInstance(searchableData);
-    DeleteResponse response = esServices
-        .delete(sessionContext, (EsSearchableData) searchableData, id);
-    if (response.getResult().getLowercase().equals("not_found")) {
-      String notFoundErrorMsg = "Delete failed - Searchable data for tenant - '" +
-          sessionContext
-          .getTenant()
-          + "', type - '" + ((EsSearchableData) searchableData).getType() + "' and id - '"
-          + id.toString() + "' was not found.";
-      throw new RuntimeException(notFoundErrorMsg);
-    }
+  public SearchResult search(SessionContext sessionContext, SearchCriteria searchCriteria) {
+    return getSearchIndex().search(sessionContext, searchCriteria);
   }
+
+  private ElementSearchIndex getElementSearchIndex() {
+    if (elementSearchIndex == null) {
+      elementSearchIndex = new ElementSearchIndex();
+    }
+    return elementSearchIndex;
+  }
+
+  private SearchIndex getSearchIndex() {
+    if (elementSearchIndex == null) {
+      searchIndex = new SearchIndex();
+    }
+    return searchIndex;
+  }
+
 }

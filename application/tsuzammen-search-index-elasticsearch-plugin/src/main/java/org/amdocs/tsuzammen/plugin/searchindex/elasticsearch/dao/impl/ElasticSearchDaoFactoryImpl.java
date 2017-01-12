@@ -32,37 +32,19 @@
  *
  */
 
-package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes;
+package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao.impl;
+
+import org.amdocs.tsuzammen.datatypes.SessionContext;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDao;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDaoFactory;
 
 
-import org.amdocs.tsuzammen.datatypes.Id;
+public class ElasticSearchDaoFactoryImpl extends ElasticSearchDaoFactory {
 
-public class EsSearchContext {
-  private Id itemId;
-  private Id versionId;
-  private String space;
+  private static final ElasticSearchDao INSTANCE = new ElasticSearchDaoImpl();
 
-  public Id getItemId() {
-    return itemId;
-  }
-
-  public void setItemId(Id itemId) {
-    this.itemId = itemId;
-  }
-
-  public Id getVersionId() {
-    return versionId;
-  }
-
-  public void setVersionId(Id versionId) {
-    this.versionId = versionId;
-  }
-
-  public String getSpace() {
-    return space;
-  }
-
-  public void setSpace(String space) {
-    this.space = space;
+  @Override
+  public ElasticSearchDao createInterface(SessionContext context) {
+    return INSTANCE;
   }
 }

@@ -32,34 +32,35 @@
  *
  */
 
-package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes;
+package org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao;
 
 
-import org.amdocs.tsuzammen.utils.fileutils.FileUtils;
+import org.amdocs.tsuzammen.datatypes.SessionContext;
+import org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateResponse;
+import org.elasticsearch.index.IndexNotFoundException;
 
-import java.io.InputStream;
-import java.util.Objects;
+public interface ElasticSearchDao {
 
-public class EsSearchableData {
-  private String type;
-  private byte[] data;
+  public IndexResponse create(SessionContext sessionContext, String index, String type,
+                              String source, String id);
 
-  public String getType() {
-    return type;
-  }
+  public GetResponse get(SessionContext sessionContext, String index, String type, String id)
+      throws IndexNotFoundException;
 
-  public void setType(String type) {
-    this.type = type;
-  }
+  /*
+  Update by merging documents
+   */
+  public UpdateResponse update(SessionContext sessionContext, String index, String type,
+                               String source, String id);
 
-  public InputStream getData() {
-    if(Objects.isNull(data)){
-      return null;
-    }
-    return FileUtils.toInputStream(data);
-  }
+  public DeleteResponse delete(SessionContext sessionContext, String index, String type, String id);
 
-  public void setData(InputStream data) {
-    this.data = FileUtils.toByteArray(data);
-  }
+  public SearchResponse search(SessionContext sessionContext, String index,
+                               EsSearchCriteria searchCriteria);
+
 }
