@@ -1,3 +1,0 @@
-{
-  "org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDaoFactory": "org.amdocs.tsuzammen.plugin.searchindex.elasticsearch.dao.impl.ElasticSearchDaoFactoryImpl"
-}
