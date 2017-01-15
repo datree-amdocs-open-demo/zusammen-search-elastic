@@ -77,6 +77,11 @@ public class SearchIndex {
   }
 
   EsSearchableData getEsSearchableData(ElementSearchableData elementSearchableData) {
+    if (Objects.isNull(elementSearchableData.getSearchableData())) {
+      EsSearchableData esSearchableData = new EsSearchableData();
+      esSearchableData.setType(EsConstants.ELEMENT_DATA_DEFAULT_TYPE);
+      return esSearchableData;
+    }
     return JsonUtil.json2Object(elementSearchableData.getSearchableData(), EsSearchableData.class);
   }
 
@@ -87,18 +92,29 @@ public class SearchIndex {
   EsSearchableData createEnrichedElasticSearchableData(SessionContext sessionContext,
                                                        ElementSearchableData elementSearchableData) {
     EsSearchableData esSearchableData = getEsSearchableData(elementSearchableData);
-    String searchableDataJson = JsonUtil.inputStream2Json(esSearchableData.getData());
+    String searchableDataJson = null;
+    if (Objects.nonNull(esSearchableData.getData())) {
+      searchableDataJson = JsonUtil.inputStream2Json(esSearchableData.getData());
+    }
     EsEnrichmentData enrichmentData = createEsEnrichmentData(sessionContext, elementSearchableData);
     String enrichmentDataJson = JsonUtil.object2Json(enrichmentData);
 
-    searchableDataJson = searchableDataJson.substring(0, searchableDataJson.length() - 1) + ",";
-    enrichmentDataJson = enrichmentDataJson.substring(1);
-    String enrichedSearchableData = searchableDataJson + enrichmentDataJson;
+    String enrichedSearchableData =
+        getEnrichedSearchableData(searchableDataJson, enrichmentDataJson);
 
     EsSearchableData enrichmentSearchable = new EsSearchableData();
     enrichmentSearchable.setData(new ByteArrayInputStream(enrichedSearchableData.getBytes()));
     enrichmentSearchable.setType(esSearchableData.getType());
     return enrichmentSearchable;
+  }
+
+  private String getEnrichedSearchableData(String searchableDataJson, String enrichmentDataJson) {
+    if( Objects.nonNull(searchableDataJson)) {
+      searchableDataJson = searchableDataJson.substring(0, searchableDataJson.length() - 1) + ",";
+      enrichmentDataJson = enrichmentDataJson.substring(1);
+      return searchableDataJson + enrichmentDataJson;
+    }
+    return enrichmentDataJson;
   }
 
   String createSearchableDataId(SessionContext sessionContext,
@@ -145,17 +161,13 @@ public class SearchIndex {
   }
 
 
-  void validation(ElementSearchableData elementSearchableData, boolean isDataRequired) {
+  void validation(ElementSearchableData elementSearchableData) {
     if (Objects.isNull(elementSearchableData)) {
       throw new RuntimeException(
           "Mandatory Data is missing - Element searchable data");
     }
     StringBuffer errorMsg = new StringBuffer();
-
-    if (isDataRequired) {
-      dataValidation(elementSearchableData, errorMsg);
-    }
-
+    dataValidation(elementSearchableData, errorMsg);
     if (Objects.isNull(elementSearchableData.getSpace())) {
       errorMsg.append("Mandatory Data is missing - Space").append("\n");
     }
@@ -175,9 +187,7 @@ public class SearchIndex {
   }
 
   void dataValidation(ElementSearchableData elementSearchableData, StringBuffer errorMsg) {
-    if (Objects.isNull(elementSearchableData.getSearchableData())) {
-      errorMsg.append("Mandatory Data is missing - Searchable data").append("\n");
-    } else {
+    if (Objects.nonNull(elementSearchableData.getSearchableData())) {
       try {
         getEsSearchableData(elementSearchableData);
       } catch (Exception exc) {
