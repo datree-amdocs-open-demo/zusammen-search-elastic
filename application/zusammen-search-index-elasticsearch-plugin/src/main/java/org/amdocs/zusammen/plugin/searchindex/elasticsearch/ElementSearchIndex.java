@@ -45,7 +45,7 @@ public class ElementSearchIndex extends SearchIndex {
 
   public void createElement(SessionContext sessionContext,
                             ElementSearchableData elementSearchableData) {
-    validation(elementSearchableData, true);
+    validation(elementSearchableData);
     EsSearchableData enrichedSearchableData =
         createEnrichedElasticSearchableData(sessionContext, elementSearchableData);
     String index = getEsIndex(sessionContext);
@@ -59,7 +59,7 @@ public class ElementSearchIndex extends SearchIndex {
   public void updateElement(SessionContext sessionContext,
                             ElementSearchableData elementSearchableData) {
     try {
-      validation(elementSearchableData, true);
+      validation(elementSearchableData);
       String searchableDataId = createSearchableDataId(sessionContext, elementSearchableData);
       EsSearchableData esSearchableData = getEsSearchableData(elementSearchableData);
 
@@ -78,7 +78,7 @@ public class ElementSearchIndex extends SearchIndex {
 
   public void deleteElement(SessionContext sessionContext,
                             ElementSearchableData elementSearchableData) {
-    validation(elementSearchableData, false);
+    validation(elementSearchableData);
     String searchableDataId = createSearchableDataId(sessionContext, elementSearchableData);
     String index = getEsIndex(sessionContext);
     EsSearchableData esSearchableData = getEsSearchableData(elementSearchableData);

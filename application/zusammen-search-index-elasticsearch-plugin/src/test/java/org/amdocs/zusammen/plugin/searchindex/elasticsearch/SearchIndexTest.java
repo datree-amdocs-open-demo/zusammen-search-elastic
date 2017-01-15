@@ -102,12 +102,26 @@ public class SearchIndexTest {
 
   @Test
   public void testGetEsSearchableData() throws Exception {
-    EsSearchableData searchableData = EsTestUtils.createSearchableData("myType", null, null, null);
+    EsSearchableData searchableData = EsTestUtils.createSearchableData("myType", "myname", null,
+        null);
     ElementSearchableData elementSearchableData =
         EsTestUtils.createElementSearchableData(searchableData,
             Space.PUBLIC, new Id(), new Id(), new Id());
     EsSearchableData data = new SearchIndex().getEsSearchableData(elementSearchableData);
     Assert.assertNotNull(data);
+    Assert.assertNotNull(data.getType());
+    Assert.assertNotNull(data.getData());
+  }
+
+  @Test
+  public void testGetEsSearchableDataWithNoData() throws Exception {
+    ElementSearchableData elementSearchableData =
+        EsTestUtils.createElementSearchableData(null,
+            Space.PUBLIC, new Id(), new Id(), new Id());
+    EsSearchableData data = new SearchIndex().getEsSearchableData(elementSearchableData);
+    Assert.assertNotNull(data);
+    Assert.assertNotNull(data.getType());
+    Assert.assertNull(data.getData());
   }
 
   @Test
@@ -138,6 +152,28 @@ public class SearchIndexTest {
     Assert.assertEquals(map.size(), 6);
     Assert.assertEquals(map.get("name"), name);
     Assert.assertEquals(map.get("message"), message);
+    Assert.assertEquals(((Map) map.get("itemId")).get("value").toString(), itemId.toString());
+    Assert
+        .assertEquals(((Map) map.get("elementId")).get("value").toString(), elementId.toString());
+    Assert
+        .assertEquals(((Map) map.get("versionId")).get("value").toString(), versionId.toString());
+    Assert.assertEquals(map.get("space"), user.toLowerCase());
+  }
+
+  @Test
+  public void testCreateOnlyEnrichedElasticSearchableData() throws Exception {
+    String user = "myUser";
+    SessionContext sessionContext = EsTestUtils.createSessionContext("tenant", user);
+    Id itemId = new Id();
+    Id versionId = new Id();
+    Id elementId = new Id();
+    ElementSearchableData elementSearchableData = EsTestUtils
+        .createElementSearchableData(null, Space.PRIVATE, itemId, versionId, elementId);
+
+    EsSearchableData enrichedElasticSearchableData = new SearchIndex()
+        .createEnrichedElasticSearchableData(sessionContext, elementSearchableData);
+    Map map = JsonUtil.json2Object(enrichedElasticSearchableData.getData(), Map.class);
+    Assert.assertEquals(map.size(), 4);
     Assert.assertEquals(((Map) map.get("itemId")).get("value").toString(), itemId.toString());
     Assert
         .assertEquals(((Map) map.get("elementId")).get("value").toString(), elementId.toString());
@@ -210,21 +246,20 @@ public class SearchIndexTest {
         "msg", null);
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(searchableData, Space.PUBLIC, new Id(), new Id(), new Id());
-    new SearchIndex().validation(elementSearchableData, true);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = "Mandatory Data is missing - Element searchable data")
   public void testValidationMissingElementSearchableData() throws Exception {
-    new SearchIndex().validation(null, true);
+    new SearchIndex().validation(null);
   }
 
-  @Test(expectedExceptions = {RuntimeException.class},
-      expectedExceptionsMessageRegExp = "Mandatory Data is missing - Searchable data.*")
+  @Test
   public void testValidationMissingSearchableData() throws Exception {
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(null, Space.PUBLIC, new Id(), new Id(), new Id());
-    new SearchIndex().validation(elementSearchableData, true);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
@@ -232,14 +267,14 @@ public class SearchIndexTest {
   public void testValidationInvalidSearchableData() throws Exception {
     ElementSearchableData elementSearchableData = new ElementSearchableData();
     elementSearchableData.setSearchableData(new ByteArrayInputStream("kfkf".getBytes()));
-    new SearchIndex().validation(elementSearchableData, true);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test
   public void testValidationSearchableDataNoRequired() throws Exception {
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(null, Space.PUBLIC, new Id(), new Id(), new Id());
-    new SearchIndex().validation(elementSearchableData, false);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
@@ -247,7 +282,7 @@ public class SearchIndexTest {
   public void testValidationMissingSpace() throws Exception {
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(null, null, new Id(), new Id(), new Id());
-    new SearchIndex().validation(elementSearchableData, false);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
@@ -255,7 +290,7 @@ public class SearchIndexTest {
   public void testValidationMissingItemId() throws Exception {
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(null, null, null, new Id(), new Id());
-    new SearchIndex().validation(elementSearchableData, false);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
@@ -263,7 +298,7 @@ public class SearchIndexTest {
   public void testValidationMissingVersionId() throws Exception {
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(null, Space.PRIVATE, new Id(), null, new Id());
-    new SearchIndex().validation(elementSearchableData, false);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
@@ -271,7 +306,7 @@ public class SearchIndexTest {
   public void testValidationMissingElementId() throws Exception {
     ElementSearchableData elementSearchableData = EsTestUtils
         .createElementSearchableData(null, Space.PRIVATE, new Id(), new Id(), null);
-    new SearchIndex().validation(elementSearchableData, false);
+    new SearchIndex().validation(elementSearchableData);
   }
 
   @Test
