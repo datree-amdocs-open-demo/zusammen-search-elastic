@@ -29,21 +29,19 @@ import org.elasticsearch.index.IndexNotFoundException;
 
 public interface ElasticSearchDao {
 
-  public IndexResponse create(SessionContext sessionContext, String index, String type,
-                              String source, String id);
+  IndexResponse create(SessionContext context, String index, String type, String source, String id);
 
-  public GetResponse get(SessionContext sessionContext, String index, String type, String id)
+  GetResponse get(SessionContext sessionContext, String index, String type, String id)
       throws IndexNotFoundException;
 
   /*
   Update by merging documents
    */
-  public UpdateResponse update(SessionContext sessionContext, String index, String type,
-                               String source, String id);
+  UpdateResponse update(SessionContext context, String index, String type, String source,
+                        String id);
 
-  public DeleteResponse delete(SessionContext sessionContext, String index, String type, String id);
+  DeleteResponse delete(SessionContext context, String index, String type, String id);
 
-  public SearchResponse search(SessionContext sessionContext, String index,
-                               EsSearchCriteria searchCriteria);
+  SearchResponse search(SessionContext context, String index, EsSearchCriteria searchCriteria);
 
 }

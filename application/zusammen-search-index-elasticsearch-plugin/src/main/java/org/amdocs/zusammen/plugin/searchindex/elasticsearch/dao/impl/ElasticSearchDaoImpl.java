@@ -18,7 +18,6 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao.impl;
 
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.EsClientServices;
-import org.amdocs.zusammen.plugin.searchindex.elasticsearch.EsConfig;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDao;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.zusammen.utils.fileutils.json.JsonUtil;
@@ -35,128 +34,63 @@ import org.elasticsearch.index.query.QueryBuilders;
 
 import java.util.Objects;
 
-public class ElasticSearchDaoImpl implements ElasticSearchDao{
+public class ElasticSearchDaoImpl implements ElasticSearchDao {
+
+  private EsClientServices esClientServices = new EsClientServices();
 
   @Override
-  public IndexResponse create(SessionContext sessionContext, String index, String type,
+  public IndexResponse create(SessionContext context, String index, String type,
                               String source, String id) {
-    TransportClient transportClient = null;
-    EsClientServices clientServices = new EsClientServices();
-    EsConfig config = new EsConfig();
-    try {
-      transportClient = clientServices.start(sessionContext, config);
-      return transportClient.prepareIndex(index, type, id).setSource(source).get();
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (Objects.nonNull(transportClient)) {
-        clientServices.stop(sessionContext, transportClient);
-      }
-    }
+    return getTransportClient(context).prepareIndex(index, type, id).setSource(source).get();
   }
 
   @Override
-  public GetResponse get(SessionContext sessionContext, String index, String type,
+  public GetResponse get(SessionContext context, String index, String type,
                          String id) throws IndexNotFoundException {
-    TransportClient transportClient = null;
-    EsClientServices clientServices = new EsClientServices();
-    EsConfig config = new EsConfig();
-    try {
-      transportClient = clientServices.start(sessionContext, config);
-      return transportClient.prepareGet(index, type, id).get();
-
-    } catch (IndexNotFoundException indexNotFoundExc) {
-      throw indexNotFoundExc;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (Objects.nonNull(transportClient)) {
-        clientServices.stop(sessionContext, transportClient);
-      }
-    }
+    return getTransportClient(context).prepareGet(index, type, id).get();
   }
-
 
   //Update by merging documents
   @Override
-  public UpdateResponse update(SessionContext sessionContext, String index, String type,
+  public UpdateResponse update(SessionContext context, String index, String type,
                                String source, String id) {
-    TransportClient transportClient = null;
-    EsClientServices clientServices = new EsClientServices();
-    EsConfig config = new EsConfig();
-    try {
-      transportClient = clientServices.start(sessionContext, config);
-      return transportClient.prepareUpdate(index, type, id).setDoc(source).get();
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (Objects.nonNull(transportClient)) {
-        clientServices.stop(sessionContext, transportClient);
-      }
-    }
+    return getTransportClient(context).prepareUpdate(index, type, id).setDoc(source).get();
   }
 
+
   @Override
-  public DeleteResponse delete(SessionContext sessionContext, String index, String type,
+  public DeleteResponse delete(SessionContext context, String index, String type,
                                String id) {
-    TransportClient transportClient = null;
-    EsClientServices clientServices = new EsClientServices();
-    EsConfig config = new EsConfig();
-    try {
-      transportClient = clientServices.start(sessionContext, config);
-      return transportClient.prepareDelete(index, type, id).get();
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (Objects.nonNull(transportClient)) {
-        clientServices.stop(sessionContext, transportClient);
-      }
-    }
-
+    return getTransportClient(context).prepareDelete(index, type, id).get();
   }
 
   @Override
-  public SearchResponse search(SessionContext sessionContext, String index,
+  public SearchResponse search(SessionContext context, String index,
                                EsSearchCriteria searchCriteria) {
-    TransportClient transportClient = null;
-    EsClientServices clientServices = new EsClientServices();
-    EsConfig config = new EsConfig();
-    try {
-      transportClient = clientServices.start(sessionContext, config);
-      SearchRequestBuilder searchRequestBuilder = transportClient.prepareSearch(index);
-      searchRequestBuilder.setSearchType(SearchType.DEFAULT);
-      searchRequestBuilder.setExplain(false);
+    SearchRequestBuilder searchRequestBuilder = getTransportClient(context).prepareSearch(index);
+    searchRequestBuilder.setSearchType(SearchType.DEFAULT);
+    searchRequestBuilder.setExplain(false);
 
-      if (Objects.nonNull(searchCriteria.getQuery())) {
-        searchRequestBuilder.setQuery(
-            QueryBuilders.wrapperQuery(JsonUtil.inputStream2Json(searchCriteria.getQuery())));
-      }
-      if (Objects.nonNull(searchCriteria.getFromPage())) {
-        searchRequestBuilder.setFrom(searchCriteria.getFromPage());
-      }
-      if (Objects.nonNull(searchCriteria.getPageSize())) {
-        searchRequestBuilder.setSize(searchCriteria.getPageSize());
-      }
-
-      if (Objects.nonNull(searchCriteria.getTypes()) && searchCriteria.getTypes().size() > 0) {
-        searchRequestBuilder.setTypes(searchCriteria.getTypes().toArray(new String[searchCriteria
-            .getTypes().size()]));
-      }
-
-      return searchRequestBuilder.get();
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (Objects.nonNull(transportClient)) {
-        clientServices.stop(sessionContext, transportClient);
-      }
+    if (Objects.nonNull(searchCriteria.getQuery())) {
+      searchRequestBuilder.setQuery(
+          QueryBuilders.wrapperQuery(JsonUtil.inputStream2Json(searchCriteria.getQuery())));
+    }
+    if (Objects.nonNull(searchCriteria.getFromPage())) {
+      searchRequestBuilder.setFrom(searchCriteria.getFromPage());
+    }
+    if (Objects.nonNull(searchCriteria.getPageSize())) {
+      searchRequestBuilder.setSize(searchCriteria.getPageSize());
     }
 
+    if (Objects.nonNull(searchCriteria.getTypes()) && searchCriteria.getTypes().size() > 0) {
+      searchRequestBuilder.setTypes(searchCriteria.getTypes().toArray(new String[searchCriteria
+          .getTypes().size()]));
+    }
+
+    return searchRequestBuilder.get();
   }
 
-
+  private TransportClient getTransportClient(SessionContext context) {
+    return esClientServices.start(context);
+  }
 }

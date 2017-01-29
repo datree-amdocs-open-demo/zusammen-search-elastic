@@ -38,7 +38,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 import java.io.ByteArrayInputStream;
 import java.util.Objects;
 
-public class SearchIndex {
+public class SearchIndexServices {
 
   private ElasticSearchDao elasticSearchDao;
 
@@ -186,7 +186,7 @@ public class SearchIndex {
         getElasticSearchDao(sessionContext).get(sessionContext, index, type, id);
     if (!getResponse.isExists()) {
       String notFoundErrorMsg = "Searchable data for tenant - '" + sessionContext.getTenant()
-          + "', type - '" + type + "' and id - '" + id.toString() + "' was not found.";
+          + "', type - '" + type + "' and id - '" + id + "' was not found.";
       throw new RuntimeException(notFoundErrorMsg);
     }
   }

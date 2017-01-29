@@ -22,13 +22,13 @@ import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.searchindex.SearchCriteria;
 import org.amdocs.zusammen.datatypes.searchindex.SearchResult;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
-import org.amdocs.zusammen.plugin.searchindex.elasticsearch.SearchIndex;
+import org.amdocs.zusammen.plugin.searchindex.elasticsearch.SearchIndexServices;
 import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
 
 public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.SearchIndex {
 
   private ElementSearchIndex elementSearchIndex;
-  private SearchIndex searchIndex;
+  private SearchIndexServices searchIndexServices;
 
   @Override
   public void createElement(SessionContext sessionContext,
@@ -50,7 +50,7 @@ public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.SearchInd
 
   @Override
   public SearchResult search(SessionContext sessionContext, SearchCriteria searchCriteria) {
-    return getSearchIndex().search(sessionContext, searchCriteria);
+    return getSearchIndexServices().search(sessionContext, searchCriteria);
   }
 
   private ElementSearchIndex getElementSearchIndex() {
@@ -60,11 +60,11 @@ public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.SearchInd
     return elementSearchIndex;
   }
 
-  private SearchIndex getSearchIndex() {
+  private SearchIndexServices getSearchIndexServices() {
     if (elementSearchIndex == null) {
-      searchIndex = new SearchIndex();
+      searchIndexServices = new SearchIndexServices();
     }
-    return searchIndex;
+    return searchIndexServices;
   }
 
 }

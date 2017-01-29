@@ -30,9 +30,14 @@ import java.net.UnknownHostException;
 import java.util.Objects;
 
 public class EsClientServices {
+  private TransportClient client = null;
 
-  public TransportClient start(SessionContext sessionContext, EsConfig config) {
-    TransportClient client;
+  public TransportClient start(SessionContext context) {
+    if (Objects.nonNull(client)) {
+      return client;
+    }
+
+    EsConfig config = new EsConfig();
     String host = config.getHost();
     String clusterName = config.getClusterName();
     int transportPort = config.getTransportPort();
@@ -55,11 +60,10 @@ public class EsClientServices {
     return client;
   }
 
-  public void stop(SessionContext sessionContext, TransportClient client) {
+  public void stop(SessionContext context) {
     if (Objects.nonNull(client)) {
       client.close();
+      client = null;
     }
   }
-
-
 }

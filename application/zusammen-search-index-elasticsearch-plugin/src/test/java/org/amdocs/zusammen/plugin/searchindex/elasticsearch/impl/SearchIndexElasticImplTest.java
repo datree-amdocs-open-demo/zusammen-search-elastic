@@ -18,7 +18,7 @@
 package org.amdocs.zusammen.plugin.searchindex.elasticsearch.impl;
 
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
-import org.amdocs.zusammen.plugin.searchindex.elasticsearch.SearchIndex;
+import org.amdocs.zusammen.plugin.searchindex.elasticsearch.SearchIndexServices;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchResult;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -34,7 +34,7 @@ public class SearchIndexElasticImplTest {
   @Mock
   ElementSearchIndex elementSearchIndexMock;
   @Mock
-  SearchIndex searchIndexMock;
+  SearchIndexServices searchIndexServicesMock;
   @InjectMocks
   SearchIndexElasticImpl searchIndexElasticImpl;
 
@@ -45,7 +45,7 @@ public class SearchIndexElasticImplTest {
     Mockito.doNothing().when(elementSearchIndexMock).createElement(anyObject(), anyObject());
     Mockito.doNothing().when(elementSearchIndexMock).updateElement(anyObject(), anyObject());
     Mockito.doNothing().when(elementSearchIndexMock).deleteElement(anyObject(), anyObject());
-    Mockito.when(searchIndexMock.search(anyObject(), anyObject())).thenReturn(new EsSearchResult());
+    Mockito.when(searchIndexServicesMock.search(anyObject(), anyObject())).thenReturn(new EsSearchResult());
   }
 
   @Test

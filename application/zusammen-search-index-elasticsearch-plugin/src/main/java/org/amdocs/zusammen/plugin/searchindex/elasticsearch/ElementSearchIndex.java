@@ -24,7 +24,7 @@ import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.index.IndexNotFoundException;
 
-public class ElementSearchIndex extends SearchIndex {
+public class ElementSearchIndex extends SearchIndexServices {
 
   public void createElement(SessionContext sessionContext,
                             ElementSearchableData elementSearchableData) {
@@ -36,6 +36,7 @@ public class ElementSearchIndex extends SearchIndex {
     String searchableDataId = createSearchableDataId(sessionContext, elementSearchableData);
 
     getElasticSearchDao(sessionContext)
+
         .create(sessionContext, index, enrichedSearchableData.getType(), source, searchableDataId);
   }
 
