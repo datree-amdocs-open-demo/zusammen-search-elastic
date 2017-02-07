@@ -29,7 +29,7 @@ import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsEnrichme
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchResult;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
-import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
+import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 import org.amdocs.zusammen.utils.fileutils.FileUtils;
 import org.amdocs.zusammen.utils.fileutils.json.JsonUtil;
 import org.elasticsearch.action.get.GetResponse;
@@ -59,13 +59,13 @@ public class SearchIndexServices {
     return elasticSearchDao;
   }
 
-  EsSearchableData getEsSearchableData(ElementSearchableData elementSearchableData) {
-    if (Objects.isNull(elementSearchableData.getSearchableData())) {
+  EsSearchableData getEsSearchableData(SearchIndexElement element) {
+    if (Objects.isNull(element.getSearchableData())) {
       EsSearchableData esSearchableData = new EsSearchableData();
       esSearchableData.setType(EsConstants.ELEMENT_DATA_DEFAULT_TYPE);
       return esSearchableData;
     }
-    return JsonUtil.json2Object(elementSearchableData.getSearchableData(), EsSearchableData.class);
+    return JsonUtil.json2Object(element.getSearchableData(), EsSearchableData.class);
   }
 
   String getEsSource(EsSearchableData searchableData) {
@@ -73,13 +73,13 @@ public class SearchIndexServices {
   }
 
   EsSearchableData createEnrichedElasticSearchableData(SessionContext sessionContext,
-                                                       ElementSearchableData elementSearchableData) {
-    EsSearchableData esSearchableData = getEsSearchableData(elementSearchableData);
+                                                       SearchIndexElement element) {
+    EsSearchableData esSearchableData = getEsSearchableData(element);
     String searchableDataJson = null;
     if (Objects.nonNull(esSearchableData.getData())) {
       searchableDataJson = JsonUtil.inputStream2Json(esSearchableData.getData());
     }
-    EsEnrichmentData enrichmentData = createEsEnrichmentData(sessionContext, elementSearchableData);
+    EsEnrichmentData enrichmentData = createEsEnrichmentData(sessionContext, element);
     String enrichmentDataJson = JsonUtil.object2Json(enrichmentData);
 
     String enrichedSearchableData =
@@ -92,7 +92,7 @@ public class SearchIndexServices {
   }
 
   private String getEnrichedSearchableData(String searchableDataJson, String enrichmentDataJson) {
-    if( Objects.nonNull(searchableDataJson)) {
+    if (Objects.nonNull(searchableDataJson)) {
       searchableDataJson = searchableDataJson.substring(0, searchableDataJson.length() - 1) + ",";
       enrichmentDataJson = enrichmentDataJson.substring(1);
       return searchableDataJson + enrichmentDataJson;
@@ -101,25 +101,25 @@ public class SearchIndexServices {
   }
 
   String createSearchableDataId(SessionContext sessionContext,
-                                ElementSearchableData elementSearchableData) {
+                                SearchIndexElement element) {
     String elasticSpace =
-        getElasticSpaceForCreAndUpd(sessionContext, elementSearchableData.getSpace());
+        getElasticSpaceForCreAndUpd(sessionContext, element.getSpace());
     StringBuffer searchableId = new StringBuffer();
     searchableId.append(elasticSpace).append("_");
-    searchableId.append(elementSearchableData.getItemId()).append("_");
-    searchableId.append(elementSearchableData.getVersionId()).append("_");
-    searchableId.append(elementSearchableData.getElementId());
+    searchableId.append(element.getItemId()).append("_");
+    searchableId.append(element.getVersionId()).append("_");
+    searchableId.append(element.getId());
     return searchableId.toString();
   }
 
   EsEnrichmentData createEsEnrichmentData(SessionContext sessionContext,
-                                          ElementSearchableData elementSearchableData) {
+                                          SearchIndexElement element) {
     EsEnrichmentData enrichmentData = new EsEnrichmentData();
     enrichmentData
-        .setSpace(getElasticSpaceForCreAndUpd(sessionContext, elementSearchableData.getSpace()));
-    enrichmentData.setItemId(elementSearchableData.getItemId());
-    enrichmentData.setVersionId(elementSearchableData.getVersionId());
-    enrichmentData.setElementId(elementSearchableData.getElementId());
+        .setSpace(getElasticSpaceForCreAndUpd(sessionContext, element.getSpace()));
+    enrichmentData.setItemId(element.getItemId());
+    enrichmentData.setVersionId(element.getVersionId());
+    enrichmentData.setElementId(element.getId());
     return enrichmentData;
   }
 
@@ -144,23 +144,23 @@ public class SearchIndexServices {
   }
 
 
-  void validation(ElementSearchableData elementSearchableData) {
-    if (Objects.isNull(elementSearchableData)) {
+  void validation(SearchIndexElement element) {
+    if (Objects.isNull(element)) {
       throw new RuntimeException(
           "Mandatory Data is missing - Element searchable data");
     }
     StringBuffer errorMsg = new StringBuffer();
-    dataValidation(elementSearchableData, errorMsg);
-    if (Objects.isNull(elementSearchableData.getSpace())) {
+    dataValidation(element, errorMsg);
+    if (Objects.isNull(element.getSpace())) {
       errorMsg.append("Mandatory Data is missing - Space").append("\n");
     }
-    if (Objects.isNull(elementSearchableData.getItemId())) {
+    if (Objects.isNull(element.getItemId())) {
       errorMsg.append("Mandatory Data is missing - Item Id").append("\n");
     }
-    if (Objects.isNull(elementSearchableData.getVersionId())) {
+    if (Objects.isNull(element.getVersionId())) {
       errorMsg.append("Mandatory Data is missing - Version Id").append("\n");
     }
-    if (Objects.isNull(elementSearchableData.getElementId())) {
+    if (Objects.isNull(element.getId())) {
       errorMsg.append("Mandatory Data is missing - Element Id").append("\n");
     }
 
@@ -169,10 +169,10 @@ public class SearchIndexServices {
     }
   }
 
-  void dataValidation(ElementSearchableData elementSearchableData, StringBuffer errorMsg) {
-    if (Objects.nonNull(elementSearchableData.getSearchableData())) {
+  void dataValidation(SearchIndexElement element, StringBuffer errorMsg) {
+    if (Objects.nonNull(element.getSearchableData())) {
       try {
-        getEsSearchableData(elementSearchableData);
+        getEsSearchableData(element);
       } catch (Exception exc) {
         errorMsg.append("Invalid searchableData, EsSearchableData object is expected").append("\n");
       }

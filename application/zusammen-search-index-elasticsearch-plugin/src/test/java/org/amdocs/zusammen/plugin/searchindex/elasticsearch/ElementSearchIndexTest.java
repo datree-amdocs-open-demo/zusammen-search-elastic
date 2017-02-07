@@ -23,7 +23,7 @@ import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.Space;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDao;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
-import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
+import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -104,9 +104,9 @@ public class ElementSearchIndexTest {
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, createName, message, tags);
-    ElementSearchableData elementSearchableData = EsTestUtils
-        .createElementSearchableData(searchableData, Space.PRIVATE, itemId, versionId, elementId);
-    elementSearchIndex.createElement(sessionContext, elementSearchableData);
+    SearchIndexElement element = EsTestUtils
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+    elementSearchIndex.createElement(sessionContext, element);
   }
 
   @Test
@@ -119,10 +119,10 @@ public class ElementSearchIndexTest {
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, updateName, null, tags);
-    ElementSearchableData elementSearchableData = EsTestUtils
-        .createElementSearchableData(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+    SearchIndexElement element = EsTestUtils
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
     Mockito.when(getResponseMock.isExists()).thenReturn(true);
-    elementSearchIndex.updateElement(sessionContext, elementSearchableData);
+    elementSearchIndex.updateElement(sessionContext, element);
 
   }
 
@@ -138,12 +138,12 @@ public class ElementSearchIndexTest {
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, updateName, null, tags);
-    ElementSearchableData elementSearchableData = EsTestUtils
-        .createElementSearchableData(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+    SearchIndexElement element = EsTestUtils
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
 
     Mockito.when(elasticSearchDaoMock.get(anyObject(), anyString(), anyString(), anyString()))
         .thenThrow(new IndexNotFoundException("indexnotfound"));
-    elementSearchIndex.updateElement(sessionContext, elementSearchableData);
+    elementSearchIndex.updateElement(sessionContext, element);
 
   }
 
@@ -159,10 +159,10 @@ public class ElementSearchIndexTest {
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, updateName, null, tags);
-    ElementSearchableData elementSearchableData = EsTestUtils
-        .createElementSearchableData(searchableData, Space.PRIVATE, new Id(), versionId, elementId);
+    SearchIndexElement element = EsTestUtils
+        .createSearchIndexElement(searchableData, Space.PRIVATE, new Id(), versionId, elementId);
     Mockito.when(getResponseMock.isExists()).thenReturn(false);
-    elementSearchIndex.updateElement(sessionContext, elementSearchableData);
+    elementSearchIndex.updateElement(sessionContext, element);
   }
 
   @Test
@@ -172,11 +172,11 @@ public class ElementSearchIndexTest {
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, null, null, null);
-    ElementSearchableData elementSearchableData = EsTestUtils
-        .createElementSearchableData(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+    SearchIndexElement element = EsTestUtils
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
 
     Mockito.when(deleteResponseMock.getResult()).thenReturn(DocWriteResponse.Result.UPDATED);
-    elementSearchIndex.deleteElement(sessionContext, elementSearchableData);
+    elementSearchIndex.deleteElement(sessionContext, element);
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
@@ -188,11 +188,11 @@ public class ElementSearchIndexTest {
     SessionContext sessionContext = EsTestUtils.createSessionContext(tenant, user);
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, null, null, null);
-    ElementSearchableData elementSearchableData = EsTestUtils
-        .createElementSearchableData(searchableData, Space.PRIVATE, new Id(), versionId, elementId);
+    SearchIndexElement element = EsTestUtils
+        .createSearchIndexElement(searchableData, Space.PRIVATE, new Id(), versionId, elementId);
 
     Mockito.when(deleteResponseMock.getResult()).thenReturn(DocWriteResponse.Result.NOT_FOUND);
-    elementSearchIndex.deleteElement(sessionContext, elementSearchableData);
+    elementSearchIndex.deleteElement(sessionContext, element);
   }
 }
 

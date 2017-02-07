@@ -19,12 +19,13 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch;
 
 import io.netty.util.internal.StringUtil;
 import org.amdocs.zusammen.datatypes.Id;
+import org.amdocs.zusammen.datatypes.Namespace;
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.Space;
 import org.amdocs.zusammen.datatypes.UserInfo;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
-import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
+import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 import org.amdocs.zusammen.utils.fileutils.json.JsonUtil;
 
 import java.io.ByteArrayInputStream;
@@ -127,18 +128,15 @@ public class EsTestUtils {
     return new ByteArrayInputStream(JsonUtil.object2Json(object).getBytes());
   }
 
-  public static ElementSearchableData createElementSearchableData(EsSearchableData searchableData,
-                                                                  Space space, Id itemId,
-                                                                  Id versionId,
-                                                                  Id elementId) {
-    ElementSearchableData elementSearchableData = new ElementSearchableData();
-    if(Objects.nonNull(searchableData)) {
-      elementSearchableData.setSearchableData(EsTestUtils.objectToInputStrem(searchableData));
+  public static SearchIndexElement createSearchIndexElement(EsSearchableData searchableData,
+                                                            Space space, Id itemId, Id versionId,
+                                                            Id elementId) {
+    SearchIndexElement element =
+        new SearchIndexElement(itemId, versionId, Namespace.ROOT_NAMESPACE, elementId);
+    if (Objects.nonNull(searchableData)) {
+      element.setSearchableData(EsTestUtils.objectToInputStrem(searchableData));
     }
-    elementSearchableData.setSpace(space);
-    elementSearchableData.setItemId(itemId);
-    elementSearchableData.setElementId(elementId);
-    elementSearchableData.setVersionId(versionId);
-    return elementSearchableData;
+    element.setSpace(space);
+    return element;
   }
 }

@@ -20,20 +20,20 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch;
 
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
-import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
+import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.index.IndexNotFoundException;
 
 public class ElementSearchIndex extends SearchIndexServices {
 
   public void createElement(SessionContext sessionContext,
-                            ElementSearchableData elementSearchableData) {
-    validation(elementSearchableData);
+                            SearchIndexElement element) {
+    validation(element);
     EsSearchableData enrichedSearchableData =
-        createEnrichedElasticSearchableData(sessionContext, elementSearchableData);
+        createEnrichedElasticSearchableData(sessionContext, element);
     String index = getEsIndex(sessionContext);
     String source = getEsSource(enrichedSearchableData);
-    String searchableDataId = createSearchableDataId(sessionContext, elementSearchableData);
+    String searchableDataId = createSearchableDataId(sessionContext, element);
 
     getElasticSearchDao(sessionContext)
 
@@ -41,15 +41,15 @@ public class ElementSearchIndex extends SearchIndexServices {
   }
 
   public void updateElement(SessionContext sessionContext,
-                            ElementSearchableData elementSearchableData) {
+                            SearchIndexElement element) {
     try {
-      validation(elementSearchableData);
-      String searchableDataId = createSearchableDataId(sessionContext, elementSearchableData);
-      EsSearchableData esSearchableData = getEsSearchableData(elementSearchableData);
+      validation(element);
+      String searchableDataId = createSearchableDataId(sessionContext, element);
+      EsSearchableData esSearchableData = getEsSearchableData(element);
 
       checkIfSearchableDataExist(sessionContext, getEsIndex(sessionContext),
           esSearchableData.getType(), searchableDataId);
-      createElement(sessionContext, elementSearchableData);
+      createElement(sessionContext, element);
 
     } catch (IndexNotFoundException indexNotFoundExc) {
       String missingIndex = "Searchable data for tenant - '" + sessionContext.getTenant()
@@ -61,11 +61,11 @@ public class ElementSearchIndex extends SearchIndexServices {
   }
 
   public void deleteElement(SessionContext sessionContext,
-                            ElementSearchableData elementSearchableData) {
-    validation(elementSearchableData);
-    String searchableDataId = createSearchableDataId(sessionContext, elementSearchableData);
+                            SearchIndexElement element) {
+    validation(element);
+    String searchableDataId = createSearchableDataId(sessionContext, element);
     String index = getEsIndex(sessionContext);
-    EsSearchableData esSearchableData = getEsSearchableData(elementSearchableData);
+    EsSearchableData esSearchableData = getEsSearchableData(element);
 
     DeleteResponse response = getElasticSearchDao(sessionContext)
         .delete(sessionContext, index, esSearchableData.getType(), searchableDataId);

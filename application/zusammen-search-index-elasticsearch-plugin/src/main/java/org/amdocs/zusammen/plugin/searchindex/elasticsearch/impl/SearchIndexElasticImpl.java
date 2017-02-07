@@ -23,29 +23,26 @@ import org.amdocs.zusammen.datatypes.searchindex.SearchCriteria;
 import org.amdocs.zusammen.datatypes.searchindex.SearchResult;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.SearchIndexServices;
-import org.amdocs.zusammen.sdk.types.searchindex.ElementSearchableData;
+import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 
-public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.SearchIndex {
+public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.searchindex.SearchIndex {
 
   private ElementSearchIndex elementSearchIndex;
   private SearchIndexServices searchIndexServices;
 
   @Override
-  public void createElement(SessionContext sessionContext,
-                            ElementSearchableData elementSearchableData) {
-    getElementSearchIndex().createElement(sessionContext, elementSearchableData);
+  public void createElement(SessionContext sessionContext, SearchIndexElement element) {
+    getElementSearchIndex().createElement(sessionContext, element);
   }
 
   @Override
-  public void updateElement(SessionContext sessionContext,
-                            ElementSearchableData elementSearchableData) {
-    getElementSearchIndex().updateElement(sessionContext, elementSearchableData);
+  public void updateElement(SessionContext sessionContext, SearchIndexElement element) {
+    getElementSearchIndex().updateElement(sessionContext, element);
   }
 
   @Override
-  public void deleteElement(SessionContext sessionContext,
-                            ElementSearchableData elementSearchableData) {
-    getElementSearchIndex().deleteElement(sessionContext, elementSearchableData);
+  public void deleteElement(SessionContext sessionContext, SearchIndexElement element) {
+    getElementSearchIndex().deleteElement(sessionContext, element);
   }
 
   @Override

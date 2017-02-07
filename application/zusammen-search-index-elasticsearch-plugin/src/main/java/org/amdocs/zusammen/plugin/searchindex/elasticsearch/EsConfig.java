@@ -18,7 +18,7 @@
 package org.amdocs.zusammen.plugin.searchindex.elasticsearch;
 
 import org.amdocs.zusammen.commons.configuration.impl.ConfigurationAccessor;
-import org.amdocs.zusammen.sdk.utils.SdkConstants;
+import org.amdocs.zusammen.sdk.SdkConstants;
 
 public class EsConfig {
   private final String host = "es.host";
