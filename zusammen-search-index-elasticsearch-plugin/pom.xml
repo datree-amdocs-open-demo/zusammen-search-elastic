@@ -20,7 +20,7 @@
 
     <parent>
         <groupId>org.amdocs.zusammen.plugin</groupId>
-        <artifactId>application</artifactId>
+        <artifactId>amdocs-zusammen-search-index</artifactId>
         <version>0.0.1</version>
     </parent>
 
