@@ -19,6 +19,7 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch.impl;
 
 
 import org.amdocs.zusammen.datatypes.SessionContext;
+import org.amdocs.zusammen.datatypes.response.Response;
 import org.amdocs.zusammen.datatypes.searchindex.SearchCriteria;
 import org.amdocs.zusammen.datatypes.searchindex.SearchResult;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
@@ -31,23 +32,27 @@ public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.searchind
   private SearchIndexServices searchIndexServices;
 
   @Override
-  public void createElement(SessionContext sessionContext, SearchIndexElement element) {
+  public Response<Void> createElement(SessionContext sessionContext, SearchIndexElement element) {
     getElementSearchIndex().createElement(sessionContext, element);
+    return new Response(Void.TYPE);
   }
 
   @Override
-  public void updateElement(SessionContext sessionContext, SearchIndexElement element) {
+  public Response<Void> updateElement(SessionContext sessionContext, SearchIndexElement element) {
     getElementSearchIndex().updateElement(sessionContext, element);
+    return new Response(Void.TYPE);
   }
 
   @Override
-  public void deleteElement(SessionContext sessionContext, SearchIndexElement element) {
+  public Response<Void> deleteElement(SessionContext sessionContext, SearchIndexElement element) {
     getElementSearchIndex().deleteElement(sessionContext, element);
+    return new Response(Void.TYPE);
   }
 
   @Override
-  public SearchResult search(SessionContext sessionContext, SearchCriteria searchCriteria) {
-    return getSearchIndexServices().search(sessionContext, searchCriteria);
+  public Response<SearchResult> search(SessionContext sessionContext, SearchCriteria
+      searchCriteria) {
+    return new Response(getSearchIndexServices().search(sessionContext, searchCriteria));
   }
 
   private ElementSearchIndex getElementSearchIndex() {
