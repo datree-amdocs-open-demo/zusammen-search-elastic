@@ -19,6 +19,7 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch;
 
 
 import org.amdocs.zusammen.datatypes.Id;
+import org.amdocs.zusammen.datatypes.Namespace;
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.Space;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDao;
@@ -46,13 +47,13 @@ import static org.mockito.Matchers.anyString;
 public class ElementSearchIndexTest {
 
   @Mock
-  ElasticSearchDao elasticSearchDaoMock;
+  private ElasticSearchDao elasticSearchDaoMock;
   @Mock
-  GetResponse getResponseMock;
+  private GetResponse getResponseMock;
   @Mock
-  DeleteResponse deleteResponseMock;
+  private DeleteResponse deleteResponseMock;
   @InjectMocks
-  ElementSearchIndex elementSearchIndex;
+  private ElementSearchIndex elementSearchIndex;
 
   @BeforeMethod(alwaysRun = true)
   public void injectDoubles() {
@@ -105,7 +106,9 @@ public class ElementSearchIndexTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, createName, message, tags);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
     elementSearchIndex.createElement(sessionContext, element);
   }
 
@@ -120,7 +123,9 @@ public class ElementSearchIndexTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, updateName, null, tags);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
     Mockito.when(getResponseMock.isExists()).thenReturn(true);
     elementSearchIndex.updateElement(sessionContext, element);
 
@@ -139,7 +144,9 @@ public class ElementSearchIndexTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, updateName, null, tags);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
 
     Mockito.when(elasticSearchDaoMock.get(anyObject(), anyString(), anyString(), anyString()))
         .thenThrow(new IndexNotFoundException("indexnotfound"));
@@ -160,7 +167,9 @@ public class ElementSearchIndexTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, updateName, null, tags);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, new Id(), versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PRIVATE, new Id(), versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
     Mockito.when(getResponseMock.isExists()).thenReturn(false);
     elementSearchIndex.updateElement(sessionContext, element);
   }
@@ -173,7 +182,9 @@ public class ElementSearchIndexTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, null, null, null);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
 
     Mockito.when(deleteResponseMock.getResult()).thenReturn(DocWriteResponse.Result.UPDATED);
     elementSearchIndex.deleteElement(sessionContext, element);
@@ -189,7 +200,9 @@ public class ElementSearchIndexTest {
     EsSearchableData searchableData =
         EsTestUtils.createSearchableData(type, null, null, null);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, new Id(), versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PRIVATE, new Id(), versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
 
     Mockito.when(deleteResponseMock.getResult()).thenReturn(DocWriteResponse.Result.NOT_FOUND);
     elementSearchIndex.deleteElement(sessionContext, element);

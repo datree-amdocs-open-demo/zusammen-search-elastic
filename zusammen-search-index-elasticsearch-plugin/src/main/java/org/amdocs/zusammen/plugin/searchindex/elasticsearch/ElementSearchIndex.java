@@ -26,8 +26,7 @@ import org.elasticsearch.index.IndexNotFoundException;
 
 public class ElementSearchIndex extends SearchIndexServices {
 
-  public void createElement(SessionContext sessionContext,
-                            SearchIndexElement element) {
+  public void createElement(SessionContext sessionContext, SearchIndexElement element) {
     validation(element);
     EsSearchableData enrichedSearchableData =
         createEnrichedElasticSearchableData(sessionContext, element);
@@ -36,12 +35,10 @@ public class ElementSearchIndex extends SearchIndexServices {
     String searchableDataId = createSearchableDataId(sessionContext, element);
 
     getElasticSearchDao(sessionContext)
-
         .create(sessionContext, index, enrichedSearchableData.getType(), source, searchableDataId);
   }
 
-  public void updateElement(SessionContext sessionContext,
-                            SearchIndexElement element) {
+  public void updateElement(SessionContext sessionContext, SearchIndexElement element) {
     try {
       validation(element);
       String searchableDataId = createSearchableDataId(sessionContext, element);
@@ -60,8 +57,7 @@ public class ElementSearchIndex extends SearchIndexServices {
     }
   }
 
-  public void deleteElement(SessionContext sessionContext,
-                            SearchIndexElement element) {
+  public void deleteElement(SessionContext sessionContext, SearchIndexElement element) {
     validation(element);
     String searchableDataId = createSearchableDataId(sessionContext, element);
     String index = getEsIndex(sessionContext);

@@ -102,24 +102,25 @@ public class SearchIndexServices {
 
   String createSearchableDataId(SessionContext sessionContext,
                                 SearchIndexElement element) {
-    String elasticSpace =
-        getElasticSpaceForCreAndUpd(sessionContext, element.getSpace());
-    StringBuffer searchableId = new StringBuffer();
-    searchableId.append(elasticSpace).append("_");
-    searchableId.append(element.getItemId()).append("_");
-    searchableId.append(element.getVersionId()).append("_");
-    searchableId.append(element.getId());
-    return searchableId.toString();
+    String elasticSpace = getElasticSpaceForCreAndUpd(sessionContext, element.getSpace());
+    return elasticSpace + "_" +
+        element.getItemId() + "_" +
+        element.getVersionId() + "_" +
+        element.getId();
   }
 
-  EsEnrichmentData createEsEnrichmentData(SessionContext sessionContext,
-                                          SearchIndexElement element) {
+  private EsEnrichmentData createEsEnrichmentData(SessionContext sessionContext,
+                                                  SearchIndexElement element) {
     EsEnrichmentData enrichmentData = new EsEnrichmentData();
     enrichmentData
-        .setSpace(getElasticSpaceForCreAndUpd(sessionContext, element.getSpace()));
+        .setSpaceName(getElasticSpaceForCreAndUpd(sessionContext, element.getSpace()));
     enrichmentData.setItemId(element.getItemId());
     enrichmentData.setVersionId(element.getVersionId());
     enrichmentData.setElementId(element.getId());
+    enrichmentData.setNamespace(element.getNamespace().getValue());
+    enrichmentData.setParentId(element.getParentId());
+    enrichmentData.setInfo(element.getInfo());
+    enrichmentData.setRelations(element.getRelations());
     return enrichmentData;
   }
 
@@ -169,7 +170,7 @@ public class SearchIndexServices {
     }
   }
 
-  void dataValidation(SearchIndexElement element, StringBuffer errorMsg) {
+  private void dataValidation(SearchIndexElement element, StringBuffer errorMsg) {
     if (Objects.nonNull(element.getSearchableData())) {
       try {
         getEsSearchableData(element);

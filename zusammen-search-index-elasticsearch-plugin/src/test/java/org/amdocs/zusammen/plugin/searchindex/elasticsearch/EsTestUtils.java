@@ -130,9 +130,8 @@ public class EsTestUtils {
 
   public static SearchIndexElement createSearchIndexElement(EsSearchableData searchableData,
                                                             Space space, Id itemId, Id versionId,
-                                                            Id elementId) {
-    SearchIndexElement element =
-        new SearchIndexElement(itemId, versionId, Namespace.ROOT_NAMESPACE, elementId);
+                                                            Namespace namespace, Id elementId) {
+    SearchIndexElement element = new SearchIndexElement(itemId, versionId, namespace, elementId);
     if (Objects.nonNull(searchableData)) {
       element.setSearchableData(EsTestUtils.objectToInputStrem(searchableData));
     }

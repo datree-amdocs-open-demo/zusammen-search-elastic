@@ -20,7 +20,8 @@ import org.amdocs.zusammen.datatypes.Id;
 import org.amdocs.zusammen.datatypes.Namespace;
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.Space;
-import org.amdocs.zusammen.datatypes.searchindex.SearchCriteria;
+import org.amdocs.zusammen.datatypes.item.Info;
+import org.amdocs.zusammen.datatypes.item.Relation;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDao;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchableData;
@@ -37,6 +38,7 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,12 +47,12 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 
 
-public class SearchIndexTest {
+public class SearchIndexServicesTest {
 
   @Mock
-  ElasticSearchDao elasticSearchDaoMock;
+  private ElasticSearchDao elasticSearchDaoMock;
   @InjectMocks
-  SearchIndexServices searchIndexServices;
+  private SearchIndexServices searchIndexServices;
 
   @BeforeMethod(alwaysRun = true)
   public void injectDoubles() {
@@ -89,7 +91,7 @@ public class SearchIndexTest {
         null);
     SearchIndexElement element =
         EsTestUtils.createSearchIndexElement(searchableData,
-            Space.PUBLIC, new Id(), new Id(), new Id());
+            Space.PUBLIC, new Id(), new Id(), Namespace.ROOT_NAMESPACE, new Id());
     EsSearchableData data = new SearchIndexServices().getEsSearchableData(element);
     Assert.assertNotNull(data);
     Assert.assertNotNull(data.getType());
@@ -100,7 +102,7 @@ public class SearchIndexTest {
   public void testGetEsSearchableDataWithNoData() throws Exception {
     SearchIndexElement element =
         EsTestUtils.createSearchIndexElement(null,
-            Space.PUBLIC, new Id(), new Id(), new Id());
+            Space.PUBLIC, new Id(), new Id(), Namespace.ROOT_NAMESPACE, new Id());
     EsSearchableData data = new SearchIndexServices().getEsSearchableData(element);
     Assert.assertNotNull(data);
     Assert.assertNotNull(data.getType());
@@ -117,52 +119,56 @@ public class SearchIndexTest {
 
   @Test
   public void testCreateEnrichedElasticSearchableData() throws Exception {
-    String user = "myUser";
-    SessionContext sessionContext = EsTestUtils.createSessionContext("tenant", user);
     String type = "type";
     String name = "createName";
     String message = "message";
     EsSearchableData searchableData = EsTestUtils.createSearchableData(type, name, message, null);
-    Id itemId = new Id();
-    Id versionId = new Id();
-    Id elementId = new Id();
-    SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PRIVATE, itemId, versionId, elementId);
 
-    EsSearchableData enrichedElasticSearchableData = new SearchIndexServices()
-        .createEnrichedElasticSearchableData(sessionContext, element);
-    Map map = JsonUtil.json2Object(enrichedElasticSearchableData.getData(), Map.class);
-    Assert.assertEquals(map.size(), 6);
+    Map map = testCreateEnrichElasticSearchableData(searchableData);
+    Assert.assertEquals(map.size(), 10);
     Assert.assertEquals(map.get("name"), name);
     Assert.assertEquals(map.get("message"), message);
-    Assert.assertEquals(((Map) map.get("itemId")).get("value").toString(), itemId.toString());
-    Assert
-        .assertEquals(((Map) map.get("elementId")).get("value").toString(), elementId.toString());
-    Assert
-        .assertEquals(((Map) map.get("versionId")).get("value").toString(), versionId.toString());
-    Assert.assertEquals(map.get("space"), user.toLowerCase());
   }
 
   @Test
   public void testCreateOnlyEnrichedElasticSearchableData() throws Exception {
+    Map map = testCreateEnrichElasticSearchableData(null);
+    Assert.assertEquals(map.size(), 8);
+  }
+
+  private Map testCreateEnrichElasticSearchableData(EsSearchableData searchableData) {
     String user = "myUser";
     SessionContext sessionContext = EsTestUtils.createSessionContext("tenant", user);
     Id itemId = new Id();
     Id versionId = new Id();
     Id elementId = new Id();
-    SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, Space.PRIVATE, itemId, versionId, elementId);
+    Id parentId = new Id();
+    Namespace namespace = new Namespace(Namespace.ROOT_NAMESPACE, parentId);
+    Info info = new Info();
+    info.setName("elementName");
+    info.setDescription("elementDesc");
+    List<Relation> relations = Arrays.asList(new Relation(), new Relation());
+
+    SearchIndexElement element = EsTestUtils.createSearchIndexElement(
+        searchableData, Space.PRIVATE, itemId, versionId, namespace, elementId);
+    element.setParentId(parentId);
+    element.setInfo(info);
+    element.setRelations(relations);
 
     EsSearchableData enrichedElasticSearchableData = new SearchIndexServices()
         .createEnrichedElasticSearchableData(sessionContext, element);
     Map map = JsonUtil.json2Object(enrichedElasticSearchableData.getData(), Map.class);
-    Assert.assertEquals(map.size(), 4);
+
+    Assert.assertEquals(map.get("spaceName"), user.toLowerCase());
     Assert.assertEquals(((Map) map.get("itemId")).get("value").toString(), itemId.toString());
-    Assert
-        .assertEquals(((Map) map.get("elementId")).get("value").toString(), elementId.toString());
-    Assert
-        .assertEquals(((Map) map.get("versionId")).get("value").toString(), versionId.toString());
-    Assert.assertEquals(map.get("space"), user.toLowerCase());
+    Assert.assertEquals(((Map) map.get("versionId")).get("value").toString(), versionId.toString());
+    Assert.assertEquals(((Map) map.get("elementId")).get("value").toString(), elementId.toString());
+    Assert.assertEquals(map.get("namespace"), namespace.getValue());
+    Assert.assertEquals(((Map) map.get("parentId")).get("value").toString(), parentId.toString());
+    Assert.assertEquals(JsonUtil.object2Json(map.get("info")), JsonUtil.object2Json(info));
+    Assert.assertEquals(
+        JsonUtil.object2Json(map.get("relations")), JsonUtil.object2Json(relations));
+    return map;
   }
 
   @Test
@@ -174,7 +180,9 @@ public class SearchIndexTest {
     Id versionId = new Id();
     Id elementId = new Id();
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PUBLIC, itemId, versionId, elementId);
+        .createSearchIndexElement(searchableData, Space.PUBLIC, itemId, versionId,
+            Namespace.ROOT_NAMESPACE, elementId
+        );
     String id = new SearchIndexServices().createSearchableDataId(sessionContext, element);
     Assert.assertNotNull(id);
     Assert.assertEquals(id,
@@ -228,7 +236,9 @@ public class SearchIndexTest {
     EsSearchableData searchableData = EsTestUtils.createSearchableData("myType", "nmyname",
         "msg", null);
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(searchableData, Space.PUBLIC, new Id(), new Id(), new Id());
+        .createSearchIndexElement(searchableData, Space.PUBLIC, new Id(), new Id(),
+            Namespace.ROOT_NAMESPACE, new Id()
+        );
     new SearchIndexServices().validation(element);
   }
 
@@ -241,7 +251,8 @@ public class SearchIndexTest {
   @Test
   public void testValidationMissingSearchableData() throws Exception {
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, Space.PUBLIC, new Id(), new Id(), new Id());
+        .createSearchIndexElement(null, Space.PUBLIC, new Id(), new Id(), Namespace.ROOT_NAMESPACE,
+            new Id());
     new SearchIndexServices().validation(element);
   }
 
@@ -257,7 +268,8 @@ public class SearchIndexTest {
   @Test
   public void testValidationSearchableDataNoRequired() throws Exception {
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, Space.PUBLIC, new Id(), new Id(), new Id());
+        .createSearchIndexElement(null, Space.PUBLIC, new Id(), new Id(), Namespace.ROOT_NAMESPACE,
+            new Id());
     new SearchIndexServices().validation(element);
   }
 
@@ -265,7 +277,8 @@ public class SearchIndexTest {
       expectedExceptionsMessageRegExp = "Mandatory Data is missing - Space.*")
   public void testValidationMissingSpace() throws Exception {
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, null, new Id(), new Id(), new Id());
+        .createSearchIndexElement(null, null, new Id(), new Id(), Namespace.ROOT_NAMESPACE,
+            new Id());
     new SearchIndexServices().validation(element);
   }
 
@@ -273,7 +286,7 @@ public class SearchIndexTest {
       expectedExceptionsMessageRegExp = ".*Mandatory Data is missing - Item Id.*")
   public void testValidationMissingItemId() throws Exception {
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, null, null, new Id(), new Id());
+        .createSearchIndexElement(null, null, null, new Id(), Namespace.ROOT_NAMESPACE, new Id());
     new SearchIndexServices().validation(element);
   }
 
@@ -281,7 +294,8 @@ public class SearchIndexTest {
       expectedExceptionsMessageRegExp = "Mandatory Data is missing - Version Id.*")
   public void testValidationMissingVersionId() throws Exception {
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, Space.PRIVATE, new Id(), null, new Id());
+        .createSearchIndexElement(null, Space.PRIVATE, new Id(), null, Namespace.ROOT_NAMESPACE,
+            new Id());
     new SearchIndexServices().validation(element);
   }
 
@@ -289,21 +303,20 @@ public class SearchIndexTest {
       expectedExceptionsMessageRegExp = "Mandatory Data is missing - Element Id.*")
   public void testValidationMissingElementId() throws Exception {
     SearchIndexElement element = EsTestUtils
-        .createSearchIndexElement(null, Space.PRIVATE, new Id(), new Id(), null);
+        .createSearchIndexElement(null, Space.PRIVATE, new Id(), new Id(), Namespace.ROOT_NAMESPACE,
+            null);
     new SearchIndexServices().validation(element);
   }
 
   @Test
   public void testCheckSearchCriteriaInstance() throws Exception {
-    SearchCriteria searchCriteria = new EsSearchCriteria();
-    new SearchIndexServices().checkSearchCriteriaInstance(searchCriteria);
+    new SearchIndexServices().checkSearchCriteriaInstance(new EsSearchCriteria());
   }
 
   @Test(expectedExceptions = {RuntimeException.class},
       expectedExceptionsMessageRegExp = "Invalid SearchCriteria, EsSearchCriteria object is expected")
   public void testCheckSearchCriteriaInstanceInvalid() throws Exception {
-    SearchCriteria searchCriteria = null;
-    new SearchIndexServices().checkSearchCriteriaInstance(searchCriteria);
+    new SearchIndexServices().checkSearchCriteriaInstance(null);
   }
 
 }

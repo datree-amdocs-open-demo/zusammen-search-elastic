@@ -19,12 +19,22 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes;
 
 
 import org.amdocs.zusammen.datatypes.Id;
+import org.amdocs.zusammen.datatypes.Namespace;
+import org.amdocs.zusammen.datatypes.item.Info;
+import org.amdocs.zusammen.datatypes.item.Relation;
+
+import java.util.Collection;
+import java.util.Set;
 
 public class EsEnrichmentData {
+  private String spaceName;
   private Id itemId;
   private Id versionId;
-  private String space;
   private Id elementId;
+  private String namespace;
+  private Id parentId;
+  private Info info;
+  private Collection<Relation> relations;
 
   public Id getItemId() {
     return itemId;
@@ -42,12 +52,12 @@ public class EsEnrichmentData {
     this.versionId = versionId;
   }
 
-  public String getSpace() {
-    return space;
+  public String getSpaceName() {
+    return spaceName;
   }
 
-  public void setSpace(String space) {
-    this.space = space;
+  public void setSpaceName(String spaceName) {
+    this.spaceName = spaceName;
   }
 
   public Id getElementId() {
@@ -56,5 +66,37 @@ public class EsEnrichmentData {
 
   public void setElementId(Id elementId) {
     this.elementId = elementId;
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public void setNamespace(String namespace) {
+    this.namespace = namespace;
+  }
+
+  public Id getParentId() {
+    return parentId;
+  }
+
+  public void setParentId(Id parentId) {
+    this.parentId = parentId;
+  }
+
+  public Info getInfo() {
+    return info;
+  }
+
+  public void setInfo(Info info) {
+    this.info = info;
+  }
+
+  public Collection<Relation> getRelations() {
+    return relations;
+  }
+
+  public void setRelations(Collection<Relation> relations) {
+    this.relations = relations;
   }
 }
