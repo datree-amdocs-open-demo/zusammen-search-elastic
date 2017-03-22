@@ -38,6 +38,7 @@
     </profiles>
     <modules>
         <module>zusammen-search-index-elasticsearch-plugin</module>
+        <module>zusammen-search-index-empty-plugin</module>
     </modules>
     <build>
         <plugins>
