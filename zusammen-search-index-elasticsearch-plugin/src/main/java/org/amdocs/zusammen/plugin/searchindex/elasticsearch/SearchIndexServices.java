@@ -32,6 +32,7 @@ import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchab
 import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 import org.amdocs.zusammen.utils.fileutils.FileUtils;
 import org.amdocs.zusammen.utils.fileutils.json.JsonUtil;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.index.IndexNotFoundException;
 
@@ -41,6 +42,10 @@ import java.util.Objects;
 public class SearchIndexServices {
 
   private ElasticSearchDao elasticSearchDao;
+
+  public ClusterHealthResponse checkHealth(SessionContext sessionContext){
+    return getElasticSearchDao(sessionContext).checkHealth(sessionContext);
+  }
 
   public SearchResult search(SessionContext sessionContext, SearchCriteria searchCriteria) {
     checkSearchCriteriaInstance(searchCriteria);

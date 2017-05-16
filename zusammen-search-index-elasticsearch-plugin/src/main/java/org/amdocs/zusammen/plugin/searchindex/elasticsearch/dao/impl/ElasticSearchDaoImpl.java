@@ -21,6 +21,8 @@ import org.amdocs.zusammen.plugin.searchindex.elasticsearch.EsClientServices;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao.ElasticSearchDao;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
 import org.amdocs.zusammen.utils.fileutils.json.JsonUtil;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -62,6 +64,12 @@ public class ElasticSearchDaoImpl implements ElasticSearchDao {
   public DeleteResponse delete(SessionContext context, String index, String type,
                                String id) {
     return getTransportClient(context).prepareDelete(index, type, id).get();
+  }
+
+
+  @Override
+  public ClusterHealthResponse checkHealth(SessionContext context) {
+    return getTransportClient(context).admin().cluster().health(new ClusterHealthRequest()).actionGet();
   }
 
   @Override

@@ -18,55 +18,93 @@
 package org.amdocs.zusammen.plugin.searchindex.elasticsearch.impl;
 
 
+import org.amdocs.zusammen.commons.health.data.HealthInfo;
+import org.amdocs.zusammen.commons.health.data.HealthStatus;
+import org.amdocs.zusammen.commons.log.ZusammenLogger;
+import org.amdocs.zusammen.commons.log.ZusammenLoggerFactory;
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.response.Response;
+import org.amdocs.zusammen.datatypes.response.ZusammenException;
 import org.amdocs.zusammen.datatypes.searchindex.SearchCriteria;
 import org.amdocs.zusammen.datatypes.searchindex.SearchResult;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.ElementSearchIndex;
+import org.amdocs.zusammen.plugin.searchindex.elasticsearch.HealthHelper;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.SearchIndexServices;
 import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.cluster.health.ClusterHealthStatus;
 
 public class SearchIndexElasticImpl implements org.amdocs.zusammen.sdk.searchindex.SearchIndex {
 
-  private ElementSearchIndex elementSearchIndex;
-  private SearchIndexServices searchIndexServices;
+    private ElementSearchIndex elementSearchIndex;
+    private SearchIndexServices searchIndexServices;
+    private static final ZusammenLogger logger = ZusammenLoggerFactory.getLogger(SearchIndexElasticImpl.class.getSimpleName());
 
-  @Override
-  public Response<Void> createElement(SessionContext sessionContext, SearchIndexElement element) {
-    getElementSearchIndex().createElement(sessionContext, element);
-    return new Response(Void.TYPE);
-  }
-
-  @Override
-  public Response<Void> updateElement(SessionContext sessionContext, SearchIndexElement element) {
-    getElementSearchIndex().updateElement(sessionContext, element);
-    return new Response(Void.TYPE);
-  }
-
-  @Override
-  public Response<Void> deleteElement(SessionContext sessionContext, SearchIndexElement element) {
-    getElementSearchIndex().deleteElement(sessionContext, element);
-    return new Response(Void.TYPE);
-  }
-
-  @Override
-  public Response<SearchResult> search(SessionContext sessionContext, SearchCriteria
-      searchCriteria) {
-    return new Response(getSearchIndexServices().search(sessionContext, searchCriteria));
-  }
-
-  private ElementSearchIndex getElementSearchIndex() {
-    if (elementSearchIndex == null) {
-      elementSearchIndex = new ElementSearchIndex();
+    @Override
+    public Response<Void> createElement(SessionContext sessionContext, SearchIndexElement element) {
+        getElementSearchIndex().createElement(sessionContext, element);
+        return new Response(Void.TYPE);
     }
-    return elementSearchIndex;
-  }
 
-  private SearchIndexServices getSearchIndexServices() {
-    if (elementSearchIndex == null) {
-      searchIndexServices = new SearchIndexServices();
+    @Override
+    public Response<Void> updateElement(SessionContext sessionContext, SearchIndexElement element) {
+        getElementSearchIndex().updateElement(sessionContext, element);
+        return new Response(Void.TYPE);
     }
-    return searchIndexServices;
-  }
+
+    @Override
+    public Response<Void> deleteElement(SessionContext sessionContext, SearchIndexElement element) {
+        getElementSearchIndex().deleteElement(sessionContext, element);
+        return new Response(Void.TYPE);
+    }
+
+    @Override
+    public Response<SearchResult> search(SessionContext sessionContext, SearchCriteria
+            searchCriteria) {
+        return new Response(getSearchIndexServices().search(sessionContext, searchCriteria));
+    }
+
+    @Override
+    public Response<HealthInfo> checkHealth(SessionContext sessionContext) {
+        HealthInfo retVal;
+        try {
+            ClusterHealthResponse clusterHealthResponse = getElementSearchIndex().checkHealth(sessionContext);
+            ClusterHealthStatus status = clusterHealthResponse.getStatus();
+            switch (status) {
+                case RED:
+                case YELLOW:
+                    logger.error("Health Check failed ", clusterHealthResponse.toString());
+                    retVal = new HealthInfo( HealthHelper.MODULE_NAME, HealthStatus.DOWN, "Cluster status is "+status);
+                    break;
+
+                case GREEN:
+                    logger.error("Health Check failed ", clusterHealthResponse.toString());
+                    retVal = new HealthInfo(HealthHelper.MODULE_NAME, HealthStatus.UP, "");
+                    break;
+
+                default:
+                    throw new RuntimeException("Unexpected value");
+            }
+        } catch (Throwable e) {
+            logger.error("Health Check failed ", e);
+            retVal = new HealthInfo( HealthHelper.MODULE_NAME, HealthStatus.DOWN, e.getMessage());
+        }
+
+        return new Response<>(retVal);
+    }
+
+    private ElementSearchIndex getElementSearchIndex() {
+        if (elementSearchIndex == null) {
+            elementSearchIndex = new ElementSearchIndex();
+        }
+        return elementSearchIndex;
+    }
+
+    private SearchIndexServices getSearchIndexServices() {
+        if (elementSearchIndex == null) {
+            searchIndexServices = new SearchIndexServices();
+        }
+        return searchIndexServices;
+    }
 
 }

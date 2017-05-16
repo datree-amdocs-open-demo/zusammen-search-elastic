@@ -20,6 +20,7 @@ package org.amdocs.zusammen.plugin.searchindex.elasticsearch.dao;
 
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.plugin.searchindex.elasticsearch.datatypes.EsSearchCriteria;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -44,4 +45,5 @@ public interface ElasticSearchDao {
 
   SearchResponse search(SessionContext context, String index, EsSearchCriteria searchCriteria);
 
+  ClusterHealthResponse checkHealth(SessionContext context);
 }

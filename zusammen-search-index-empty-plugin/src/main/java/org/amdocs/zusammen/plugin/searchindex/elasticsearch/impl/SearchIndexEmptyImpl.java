@@ -18,6 +18,7 @@
 package org.amdocs.zusammen.plugin.searchindex.elasticsearch.impl;
 
 
+import org.amdocs.zusammen.commons.health.data.HealthInfo;
 import org.amdocs.zusammen.datatypes.SessionContext;
 import org.amdocs.zusammen.datatypes.response.Response;
 import org.amdocs.zusammen.datatypes.searchindex.SearchCriteria;
@@ -26,6 +27,10 @@ import org.amdocs.zusammen.sdk.searchindex.types.SearchIndexElement;
 
 public class SearchIndexEmptyImpl implements org.amdocs.zusammen.sdk.searchindex.SearchIndex {
 
+  @Override
+  public Response<HealthInfo> checkHealth(SessionContext sessionContext) {
+      return new Response(Void.TYPE);
+  }
 
   @Override
   public Response<Void> createElement(SessionContext sessionContext, SearchIndexElement element) {
