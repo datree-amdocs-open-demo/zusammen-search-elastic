@@ -3,7 +3,7 @@
     "level": 1,
     "plugins": {
       "zusammen_search_index": {
-        "implementationClass": "org.amdocs.zusammen.plugin.searchindex.elasticsearch.impl.SearchIndexElasticImpl"
+        "implementationClass": "com.amdocs.zusammen.plugin.searchindex.elasticsearch.impl.SearchIndexElasticImpl"
       }
     }
   }
