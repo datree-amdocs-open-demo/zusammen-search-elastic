@@ -7,18 +7,18 @@
     <parent>
         <groupId>com.amdocs.zusammen.plugin</groupId>
         <artifactId>amdocs-zusammen-search-index</artifactId>
-        <version>0.0.2</version>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <groupId>com.amdocs.zusammen.plugin</groupId>
     <artifactId>zusammen-search-index-empty-plugin</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.1-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>com.amdocs.zusammen</groupId>
             <artifactId>zusammen-sdk</artifactId>
-            <version>0.0.2</version>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
