@@ -17,7 +17,7 @@
 
 package com.amdocs.zusammen.plugin.searchindex.elasticsearch.impl;
 
-
+import com.amdocs.zusammen.commons.health.data.HealthStatus;
 import com.amdocs.zusammen.commons.health.data.HealthInfo;
 import com.amdocs.zusammen.datatypes.SessionContext;
 import com.amdocs.zusammen.datatypes.response.Response;
@@ -29,7 +29,9 @@ public class SearchIndexEmptyImpl implements com.amdocs.zusammen.sdk.searchindex
 
   @Override
   public Response<HealthInfo> checkHealth(SessionContext sessionContext) {
-      return new Response(Void.TYPE);
+    HealthInfo healthInfo =new HealthInfo("SEARCH",
+            HealthStatus.UP, "Cluster status is Green");
+      return new Response<HealthInfo>( healthInfo);
   }
 
   @Override
