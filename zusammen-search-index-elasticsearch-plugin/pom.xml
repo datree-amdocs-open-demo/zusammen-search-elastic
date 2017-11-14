@@ -21,12 +21,12 @@
     <parent>
         <groupId>com.amdocs.zusammen.plugin</groupId>
         <artifactId>amdocs-zusammen-search-index</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.2.4</version>
     </parent>
 
     <groupId>com.amdocs.zusammen.plugin</groupId>
     <artifactId>zusammen-search-index-elasticsearch-plugin</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.2.4</version>
     <packaging>jar</packaging>
 
     <modelVersion>4.0.0</modelVersion>
@@ -34,17 +34,17 @@
         <dependency>
             <groupId>com.amdocs.zusammen</groupId>
             <artifactId>zusammen-sdk</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.2.4</version>
         </dependency>
         <dependency>
             <groupId>com.amdocs.zusammen</groupId>
             <artifactId>zusammen-commons-db-api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.2.4</version>
         </dependency>
         <dependency>
             <groupId>com.amdocs.zusammen</groupId>
             <artifactId>zusammen-commons-db-impl</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.2.4</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
