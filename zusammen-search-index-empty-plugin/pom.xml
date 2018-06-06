@@ -10,15 +10,13 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.amdocs.zusammen.plugin</groupId>
     <artifactId>zusammen-search-index-empty-plugin</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>com.amdocs.zusammen</groupId>
             <artifactId>zusammen-sdk</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
